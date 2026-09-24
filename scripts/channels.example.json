@@ -1,0 +1,42 @@
+{
+  "_comment": "SLS 多方日志配置模板。复制此文件为 channels.json 后填入实际 AK（schema 与 server_log_query.py / rpa_log_query.py 实际读取的字段一致）。",
+  "_notes": {
+    "access_key": "顶层共享一个只读 AK 即可，需 log:GetLogStoreLogs 查询权限（RPA 客户端上报用的 AK 通常只有写权限，需要单独申请）",
+    "server_project": "服务端日志所在 SLS 项目（server_log_query.py 用）",
+    "rpa_project": "RPA 日志所在 SLS 项目（rpa_log_query.py 用）",
+    "server.logstore": "服务端 API 日志 logstore（全文索引需开启）",
+    "channels.*.logstore": "各渠道 RPA 日志 prod logstore；dev_logstore 供 --dev 参数使用"
+  },
+  "endpoint": "cn-hangzhou.log.aliyuncs.com",
+  "rpa_project": "customer-servhub-log",
+  "server_project": "bty-prod-ack-log",
+  "access_key_id": "YOUR_ACCESS_KEY_ID",
+  "access_key_secret": "YOUR_ACCESS_KEY_SECRET",
+  "channels": {
+    "douyin": {
+      "name": "抖音",
+      "logstore": "project-douyin-rpa-prod",
+      "dev_logstore": "project-douyin-rpa-dev"
+    },
+    "jingdong": {
+      "name": "京东",
+      "logstore": "project-jd-rpa-prod",
+      "dev_logstore": "project-jd-rpa-dev"
+    },
+    "pinduoduo": {
+      "name": "拼多多",
+      "logstore": "project-pdd-rpa-prod",
+      "dev_logstore": "project-pdd-rpa-dev"
+    },
+    "qianniu": {
+      "name": "千牛",
+      "logstore": "qianniu-rpa-new-prod",
+      "dev_logstore": "qianniu-rpa-new-dev"
+    }
+  },
+  "server": {
+    "name": "服务端(customer-servhub-api)",
+    "project": "bty-prod-ack-log",
+    "logstore": "customer-servhub-api"
+  }
+}

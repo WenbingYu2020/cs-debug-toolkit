@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Leak detection patterns for build_cli.ps1 quality gate C. Copy to leak_patterns.json and customize.",
+  "patterns": [
+    "YOUR_ACCESS_KEY_PREFIX_HERE",
+    "C:\\\\Users\\\\YourActualUsername",
+    "your-unique-identifier"
+  ],
+  "extensions": [
+    ".py",
+    ".ps1",
+    ".js",
+    ".md",
+    ".json"
+  ],
+  "hint": "Add your own patterns to detect personal paths, access keys, or PII before packaging."
+}

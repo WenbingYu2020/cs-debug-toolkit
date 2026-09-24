@@ -1,0 +1,42 @@
+{
+  "name": "cs-debug-toolkit",
+  "version": "1.2.0",
+  "description": "客服多方日志排查工具包：服务端 SLS × RPA SLS × 运维记录 × 主机/IP 侧四方交叉分析，附 5 个 agent skill（SKILL.md 跨智能体通用格式）",
+  "keywords": [
+    "betteryeah",
+    "customer-service",
+    "log",
+    "sls",
+    "rpa",
+    "skill",
+    "agent",
+    "debug"
+  ],
+  "license": "UNLICENSED",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "bin": {
+    "csdbg": "bin/csdbg.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "scripts/",
+    "skill/",
+    "templates/",
+    "docs/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "postinstall": "node bin/csdbg.js --postinstall"
+  },
+  "optionalDependencies": {
+    "@alicloud/ecd20200930": "^5.3.0",
+    "@alicloud/openapi-core": "^1.0.8"
+  }
+}

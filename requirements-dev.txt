@@ -1,0 +1,2 @@
+# 开发/测试依赖（与运行依赖 requirements.txt 分开；生产/分发环境无需安装）
+pytest>=7

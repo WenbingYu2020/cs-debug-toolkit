@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px; margin: 0 auto;
+            background: white; border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white; padding: 30px 40px;
+        }
+        header h1 { font-size: 1.8em; margin-bottom: 8px; }
+        header .meta { font-size: 0.95em; opacity: 0.95; display: flex; gap: 25px; flex-wrap: wrap; }
+        header .meta span::before { content: "▸ "; opacity: 0.7; }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px; padding: 30px 40px;
+            background: #f8f9fa; border-bottom: 1px solid #e9ecef;
+        }
+        .stat-card {
+            background: white; padding: 20px;
+            border-radius: 8px; text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid #4f46e5;
+        }
+        .stat-card .label { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+        .stat-card .value { font-size: 1.8em; font-weight: bold; color: #4f46e5; }
+        .stat-card.warning { border-left-color: #f59e0b; }
+        .stat-card.warning .value { color: #f59e0b; }
+        .stat-card.danger { border-left-color: #ef4444; }
+        .stat-card.danger .value { color: #ef4444; }
+        .stat-card.success { border-left-color: #10b981; }
+        .stat-card.success .value { color: #10b981; }
+
+        .content { padding: 30px 40px; }
+        h2 {
+            font-size: 1.4em; margin: 25px 0 15px;
+            color: #4f46e5; padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        h2:first-of-type { margin-top: 0; }
+
+        .log-timeline {
+            background: #f8f9fa; border-radius: 8px;
+            padding: 15px; margin-bottom: 20px;
+        }
+        .log-entry {
+            background: white; padding: 12px 15px;
+            margin-bottom: 8px; border-radius: 6px;
+            border-left: 3px solid #6b7280;
+            display: grid; grid-template-columns: 90px 70px 1fr auto; gap: 10px;
+            align-items: start; font-size: 0.9em;
+        }
+        .log-entry.error { border-left-color: #ef4444; background: #fef2f2; }
+        .log-entry.warning { border-left-color: #f59e0b; background: #fffbeb; }
+        .log-entry.info { border-left-color: #3b82f6; }
+        .log-entry.debug { border-left-color: #6b7280; opacity: 0.85; }
+        .log-time { color: #666; font-family: monospace; font-size: 0.85em; }
+        .log-level {
+            padding: 2px 8px; border-radius: 4px;
+            font-size: 0.75em; font-weight: bold;
+            text-align: center; text-transform: uppercase;
+        }
+        .log-level.error { background: #ef4444; color: white; }
+        .log-level.warning { background: #f59e0b; color: white; }
+        .log-level.info { background: #3b82f6; color: white; }
+        .log-level.debug { background: #6b7280; color: white; }
+        .log-message {
+            font-family: monospace; font-size: 0.85em;
+            word-break: break-all; white-space: pre-wrap;
+        }
+        .log-tag { color: #999; font-size: 0.75em; }
+
+        .conversation-card {
+            background: #f8f9fa; border-radius: 8px;
+            padding: 20px; margin-bottom: 15px;
+        }
+        .conversation-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 12px; margin-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .conversation-id {
+            font-family: monospace; font-size: 0.9em;
+            color: #4f46e5; font-weight: 600;
+        }
+        .message-list { display: flex; flex-direction: column; gap: 8px; }
+        .message {
+            padding: 10px 12px; border-radius: 6px; background: white;
+            font-size: 0.9em; display: grid;
+            grid-template-columns: 80px 90px 1fr; gap: 10px;
+        }
+        .message.user { border-left: 3px solid #10b981; }
+        .message.assistant { border-left: 3px solid #4f46e5; }
+        .message.system { border-left: 3px solid #f59e0b; background: #fffbeb; }
+        .msg-time { color: #666; font-family: monospace; font-size: 0.8em; }
+        .msg-role {
+            font-size: 0.8em; font-weight: bold; text-transform: uppercase;
+        }
+        .msg-role.user { color: #10b981; }
+        .msg-role.assistant { color: #4f46e5; }
+        .msg-role.system { color: #f59e0b; }
+        .msg-content { white-space: pre-wrap; word-break: break-word; }
+        .msg-error {
+            background: #ef4444; color: white;
+            padding: 2px 6px; border-radius: 3px;
+            font-size: 0.75em; margin-left: 5px;
+        }
+
+        .analysis-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+            border-radius: 8px; padding: 20px; margin-bottom: 20px;
+            border-left: 4px solid #f59e0b;
+        }
+        .analysis-section h3 { color: #92400e; margin-bottom: 10px; font-size: 1.1em; }
+        .analysis-section p { margin-bottom: 8px; }
+
+        details {
+            margin: 15px 0; background: #f8f9fa;
+            padding: 15px; border-radius: 8px;
+        }
+        details summary {
+            cursor: pointer; font-weight: 600;
+            color: #4f46e5; padding: 5px 0;
+        }
+        details pre {
+            margin-top: 10px; background: #1f2937; color: #e5e7eb;
+            padding: 15px; border-radius: 6px;
+            overflow-x: auto; font-size: 0.85em;
+            max-height: 400px; overflow-y: auto;
+        }
+
+        .search-box {
+            margin: 15px 0; padding: 10px 15px;
+            background: white; border: 1px solid #e9ecef;
+            border-radius: 6px; width: 100%; font-size: 0.95em;
+        }
+
+        footer {
+            background: #f8f9fa; padding: 15px 40px;
+            text-align: center; color: #666; font-size: 0.85em;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .no-data {
+            text-align: center; padding: 40px;
+            color: #999; font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 RPA 日志分析报告</h1>
+            <div class="meta">
+                <span>渠道: <strong>{{CHANNEL_NAME}}</strong></span>
+                <span>设备: <code>{{EQUIPMENT_ID}}</code></span>
+                <span>时间: <strong>{{QUERY_TIME}}</strong></span>
+                <span>范围: ±{{RANGE_MINUTES}} 分钟</span>
+            </div>
+        </header>
+
+        <div class="summary">
+            <div class="stat-card">
+                <div class="label">总日志数</div>
+                <div class="value">{{TOTAL_LOGS}}</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="label">ERROR 数量</div>
+                <div class="value">{{ERROR_COUNT}}</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="label">WARNING 数量</div>
+                <div class="value">{{WARNING_COUNT}}</div>
+            </div>
+            <div class="stat-card success">
+                <div class="label">关联会话</div>
+                <div class="value">{{CONVERSATION_COUNT}}</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2>📋 SLS 日志时间线</h2>
+            <input type="text" class="search-box" placeholder="🔍 搜索日志内容..." onkeyup="filterLogs(this.value)">
+            <div class="log-timeline" id="logTimeline">
+                {{LOG_ENTRIES}}
+            </div>
+
+            <h2>💬 关联会话消息</h2>
+            <div id="conversations">
+                {{CONVERSATIONS}}
+            </div>
+
+            <h2>🎯 根因分析</h2>
+            <div class="analysis-section">
+                {{ANALYSIS}}
+            </div>
+
+            <details>
+                <summary>📎 完整 JSON 数据（点击展开）</summary>
+                <pre>{{RAW_JSON}}</pre>
+            </details>
+        </div>
+
+        <footer>
+            📅 报告生成时间: {{GENERATED_AT}} | 数据来源: SLS + cs-cli
+        </footer>
+    </div>
+
+    <script>
+        function filterLogs(keyword) {
+            const entries = document.querySelectorAll('#logTimeline .log-entry');
+            const kw = keyword.toLowerCase();
+            entries.forEach(entry => {
+                const text = entry.textContent.toLowerCase();
+                entry.style.display = text.includes(kw) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

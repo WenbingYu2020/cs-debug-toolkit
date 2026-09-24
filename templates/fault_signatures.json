@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "description": "故障签名知识库（P4-11）：把沉淀的故障模式结构化，供 cross_analysis 自动匹配候选签名。只放通用特征，不放客户会话ID/店铺名等业务数据；本地可复制到 ~/.csdbg/fault_signatures.json 增补（同 id 覆盖）。",
+  "match_keys": {
+    "server": "① 服务端日志记录",
+    "rpa": "② RPA 端日志（聚合全部渠道）",
+    "ops": "③ ops 运维记录",
+    "host": "④ 主机侧记录"
+  },
+  "pattern_semantics": {
+    "regex_all": "记录文本(JSON)需同时命中的正则列表",
+    "regex_any": "记录文本命中其一即可的正则列表",
+    "min_count": "命中条数下限（有正则时默认 1）",
+    "max_count": "命中条数上限（如 0 表示该源必须无记录）"
+  },
+  "signatures": [
+    {
+      "id": "stale-running-state",
+      "type": "第十五型",
+      "name": "陈旧 running_state 残留 → AI 静默跳过",
+      "severity_hint": "故障",
+      "signature": [
+        "跳过 WARNING 带「没有消息需要处理」且 running_state=running",
+        "零 agent_service 日志（AI 完全未调用）",
+        "事件链仅 MESSAGE_READ，无 PROCESSING_MESSAGES"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["没有消息需要处理"], "min_count": 1}
+      },
+      "conclusion_template": "历史转人工会话复发、会话状态固化 running_state=running，AI 侧守卫误判跳过 → 消息零派发。修复方向：状态复位分支覆盖同设备复发（而非仅设备/客服变更时）。"
+    },
+    {
+      "id": "sticky-manual-takeover",
+      "type": "第十五型",
+      "name": "has_manual_takeover 粘性残留 → AI 不接管",
+      "severity_hint": "故障",
+      "signature": [
+        "跳过 payload 带 has_manual_takeover:true（对照会话无此字段）",
+        "复位分支只在设备变更（客服切换）时命中，同设备复发即静默",
+        "debug reproduce 报「聊天记录不存在」= AI 零调用铁证"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["has_manual_takeover"], "min_count": 1}
+      },
+      "conclusion_template": "会话残留粘性人工接管标记 → AI 跳过接管。同根于「陈旧状态残留」家族（第十五型）。"
+    },
+    {
+      "id": "duplicate-transfer",
+      "type": "第十四型",
+      "name": "会话重建丢状态 → 重复转人工",
+      "severity_hint": "故障",
+      "signature": [
+        "创建新会话 + 批量导入 N 条历史消息",
+        "dispatcher 系统消息「未命中任何规则：由 X 转交给 Y」",
+        "同会话二次 route-to-a-live-agent"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["未命中任何规则"], "min_count": 1}
+      },
+      "conclusion_template": "延迟上报导致会话重建、已转人工状态丢失 → AI 基于历史重判并二次转人工。修复方向：重建会话时同步转移接管状态。"
+    },
+    {
+      "id": "manual-takeover-disconnect",
+      "type": "第十三型",
+      "name": "平台手动接待与系统转接脱节",
+      "severity_hint": "故障",
+      "signature": [
+        "人工在千牛平台侧手动抢单（系统无感知）",
+        "dispatcher「未命中任何规则」→ assistant_id 不更新",
+        "系统继续重试转接 30min+，同会话多次转人工"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["转交给"], "min_count": 1}
+      },
+      "conclusion_template": "千牛平台手动接待与系统转接链路脱节：人工已接管但系统不更新 assistant_id，RPA 无感知并持续重试转接。"
+    },
+    {
+      "id": "transfer-no-human-online",
+      "type": "第十一型",
+      "name": "接待客服组无人在线 → 工单重试",
+      "severity_hint": "非故障",
+      "signature": [
+        "首派失败 no_human_online",
+        "约 8 分钟自动关闭后二次派发成功",
+        "延迟本质 = 人工上线时间，非 AI/链路故障"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["no_human_online"], "min_count": 1}
+      },
+      "conclusion_template": "转人工派发时接待组无人在线 → 待转工单重试至人工上线。属业务排班问题，人工响应不计 AI 平响。"
+    },
+    {
+      "id": "customer-reply-timeout",
+      "type": "超时兜底",
+      "name": "customer-reply-timeout 超时转人工",
+      "severity_hint": "线索",
+      "signature": [
+        "server 出现 customer-reply-timeout",
+        "常与其他根因叠加（AI 静默/内容缺陷/业务断供）形成 100s+ 长尾"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["customer-reply-timeout"], "min_count": 1}
+      },
+      "conclusion_template": "触发客服超时兜底转人工。需继续定位「为什么超时」：查 AI 是否被调用、内容是否被拦、额度是否可用。"
+    },
+    {
+      "id": "credit-exhausted",
+      "type": "业务断供",
+      "name": "积分/额度耗尽 → 专家 Agent 拒答",
+      "severity_hint": "故障",
+      "signature": [
+        "workspace 积分/额度耗尽",
+        "专家 Agent 拒答 + 夜间无人接 → timeout 长尾",
+        "同空间多会话同时段受影响"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["积分", "不足|耗尽"], "min_count": 1}
+      },
+      "conclusion_template": "业务断供型：额度耗尽导致 AI 能力失效。优先恢复额度并确认充值状态。"
+    },
+    {
+      "id": "blacklist-no-reply",
+      "type": "第五型",
+      "name": "店铺黑名单「拒发不计回复」",
+      "severity_hint": "非故障",
+      "signature": [
+        "RPA 侧命中店铺黑名单 → 消息拒发",
+        "平台口径不计为回复 → 表现为长尾",
+        "非技术故障，属业务规则"
+      ],
+      "evidence_pattern": {
+        "rpa": {"regex_all": ["黑名单"], "min_count": 1}
+      },
+      "conclusion_template": "店铺黑名单导致消息拒发且不计回复，平台统计形成长尾。非故障。"
+    },
+    {
+      "id": "fullwindow-special-type-batch",
+      "type": "第十六型",
+      "name": "无锚点整窗全量上报 → 特殊类型整包判死",
+      "severity_hint": "故障",
+      "signature": [
+        "RPA 上报「消息范围: all」（无锚点整窗全量）",
+        "历史 VIDEO/图片等特殊类型被当新消息整包上报",
+        "unread_message_special_types 整包判死转人工（AI 零调用）"
+      ],
+      "evidence_pattern": {
+        "rpa": {"regex_all": ["消息范围: all"], "min_count": 1}
+      },
+      "conclusion_template": "RPA 无锚点整窗上报把历史特殊类型消息当新消息 → 整包判死转人工。修复方向：上报前按锚点/时间过滤。"
+    },
+    {
+      "id": "empty-session-giveup",
+      "type": "第十七型",
+      "name": "空会话判定 + 放弃冷却吞转人工",
+      "severity_hint": "故障",
+      "signature": [
+        "RPA 日志「空会话 第 N/3 次确认」",
+        "回执「会话无任何消息内容，多轮确认为空会话已关闭」",
+        "后续转人工被「放弃冷却期」直接跳过 → customer_not_found",
+        "截图常证明会话真实存在（「顾客找不到」是冷却文案）"
+      ],
+      "evidence_pattern": {
+        "rpa": {"regex_all": ["空会话"], "min_count": 1},
+        "server": {"regex_all": ["会话无任何消息内容"], "min_count": 1}
+      },
+      "conclusion_template": "RPA 定位校验连续判空 → 异常会话丢弃 + 放弃冷却吞掉转人工。是 RPA 探测/冷却机制缺陷，非客户会话不存在。"
+    },
+    {
+      "id": "panel-stale-anchor-loss",
+      "type": "面板锚点",
+      "name": "面板陈旧/半加载 → 锚点失效漏上报",
+      "severity_hint": "故障",
+      "signature": [
+        "RPA 连续锚点丢失警告",
+        "面板陈旧/半加载 → DOM 增量锚点失效",
+        "按「无新消息」跳过 → 真实消息漏读（平台无记录）"
+      ],
+      "evidence_pattern": {
+        "rpa": {"regex_all": ["锚点"], "regex_any": ["丢失|失效"], "min_count": 1}
+      },
+      "conclusion_template": "千牛面板陈旧导致增量锚点失效、消息漏读。修复方向：锚点缺失时回落整窗扫描。"
+    },
+    {
+      "id": "transfer-storm",
+      "type": "第六型",
+      "name": "转人工回飘风暴",
+      "severity_hint": "故障",
+      "signature": [
+        "多条消息各自触发转人工 → 重复派发",
+        "回执回飘/风暴，会话被反复转接",
+        "同窗口 route-to-a-live-agent 次数显著偏多"
+      ],
+      "evidence_pattern": {
+        "server": {"regex_all": ["route-to-a-live-agent"], "min_count": 3}
+      },
+      "conclusion_template": "转人工回飘风暴：需在派发侧加幂等/合并，避免同会话重复转接。"
+    },
+    {
+      "id": "jd-client-startup-failure",
+      "type": "第十二型",
+      "name": "京麦启动失败（内存不足 / UIA 初始化）",
+      "severity_hint": "故障",
+      "signature": [
+        "Windows CreateProcess 错误码 8（内存资源不足）",
+        "或 UIA 业务树初始化失败",
+        "多设备同时段启动失败 → 前者重启主机，后者清缓存"
+      ],
+      "evidence_pattern": {
+        "rpa": {"regex_any": ["内存资源不足|CreateProcess|UIA业务树"], "min_count": 1}
+      },
+      "conclusion_template": "京东 RPA 启动失败两类：内存型需重启主机释放；UIA 型需清理客户端缓存。"
+    },
+    {
+      "id": "jd-offline-client-death",
+      "type": "设备离线",
+      "name": "RPA offline 客户端僵死",
+      "severity_hint": "故障",
+      "signature": [
+        "设备持续 offline（非网络抖动）",
+        "探测日志 zero / never_success",
+        "客户端进程僵死留 Qt 残留 → RPA 重启误判就绪"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "客户端进程僵死型离线：需彻底结束残留进程再拉起；仅凭 offline 事件无法自动匹配，需人工核查探测日志。"
+    },
+    {
+      "id": "agent-duration-drift",
+      "type": "第八型",
+      "name": "server 端 agent_duration 连日漂移",
+      "severity_hint": "非故障",
+      "signature": [
+        "agent_duration 连日缓涨（如 6.6→10.1s）",
+        "对照 agent 持平 + 主机健康 + 发送开销平",
+        "短回复耗时翻倍 → 输入侧变重（知识/上下文增长）"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "服务端处理链路渐重（非故障）：输入侧变大导致。如需收敛可精简知识/上下文注入。"
+    },
+    {
+      "id": "platform-metric-mismatch",
+      "type": "第十型",
+      "name": "平台统计口径误差（非故障）",
+      "severity_hint": "统计口径",
+      "signature": [
+        "平台报值显著高于服务端真值",
+        "跨夜封顶 30min / 人工响应混入 / 送信失败长尾",
+        "核验法：平台报值×消息数 vs 服务端总量，差额定位单条长尾"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "平台口径与 AI 平响口径不一致造成的统计假象，非系统故障。报告中注明口径差异即可。"
+    }
+  ]
+}

@@ -11,6 +11,7 @@ BetterYeah AI 客服平台（`@bty/customer-service-cli`）配套的**运维问�
 | 1 | **服务端 server 日志** | SLS `bty-prod-ack-log` / logstore `customer-servhub-api`（cn-hangzhou） | `scripts/server_log_query.py`（aliyun-log SDK） |
 | 2 | **RPA 端日志** | SLS `customer-servhub-log` / 4 渠道 logstore（抖音/京东/拼多多/千牛，prod+dev） | `scripts/rpa_log_query.py`（aliyun-log SDK） |
 | 3 | **ops 运维日志** | 本地已安装的 `@bty/customer-service-cli` → `cs-cli ops-record list/get` | `scripts/ops_log_query.py`（cs-cli 子进程） |
+| 4 | **主机/IP 侧（目标设备）** | 设备 `equipment_id` / ECD 云电脑 | `scripts/host_events_query.py` → 电源/重启/崩溃事件（ECD 实锤优先 / SLS 心跳重建兜底） |
 
 四方交叉取证后，**分析结论统一落盘到 [`temp/`](temp/)**（功能区最终交付物）：
 
@@ -20,17 +21,27 @@ BetterYeah AI 客服平台（`@bty/customer-service-cli`）配套的**运维问�
     ├── ① server_log_query.py   → 服务端处理链路（SOP/下发/状态机/ERROR）
     ├── ② rpa_log_query.py      → RPA 端执行（接收/发送/失败原因）
     ├── ③ ops_log_query.py      → 运维操作（谁在什么时间改了哪个 Agent 的什么配置）
+    ├── ④ host_events_query.py  → 目标设备 电源/重启/崩溃 事件（第④源，ECD 优先/SLS 兜底）
     │
     ▼
 cross_analysis.py  对齐四方 → temp/evidence_<时间>_<锚点>/
-    │   ├── server.json / rpa_<channel>.json / ops.json   （原始证据）
+    │   ├── server.json / rpa_<channel>.json / ops.json / host.json   （原始证据）
     │   ├── anchors.json  （锚点命中矩阵 + 跨源 ID 共现 + ops 变更关联）
-    │   └── evidence.md   （合并时间线 + 异常提取 + 关联结论素材）
+    │   ├── meta.json     （creator/标签/status，供批量审计与结论回填）
+    │   └── evidence.md   （合并时间线 + 异常提取 + §3b 电源/重启/崩溃事件专项 + 关联结论素材
+    │                      + 🧩 故障签名匹配（候选，内置知识库自动匹配））
     ▼
-/cs-log-cross (LLM 交叉论证 5 问：断链定位 → 时间对齐 → 变更介入 → 反证 → 归因)
+/cs-log-cross (LLM 交叉论证 6 问：断链定位 → 时间对齐 → 变更介入 → 主机侧判定 → 反证 → 归因)
     ▼
 ✅ temp/analysis_<YYYYMMDD-HHMM>-<slug>.md   （问题结论：主因/次因/排除项/置信度/建议）
 ```
+
+> **数据源插件化**：四源（服务端/RPA/ops/主机）实现在 `scripts/sources.py` 的 `DataSource` 插件里，
+> 由 `build_sources()` 注册表装配——新增数据源只需实现子类 + 注册一行，不改主流程。
+>
+> **故障签名匹配**：`templates/fault_signatures.json` 沉淀了 16 条故障签名（第十五/六/七型等），
+> 证据包生成时自动匹配候选并在 `evidence.md` 给出「命中特征 + 结论模板」；
+> `csdbg signatures --list` 查看知识库、`--match-dir <证据包>` 对历史证据复检，本地可增补到 `~/.csdbg/`。
 
 ## 分发（给别人用）
 
@@ -38,10 +49,10 @@ cross_analysis.py  对齐四方 → temp/evidence_<时间>_<锚点>/
 
 | 形态 | 构建命令 | 产物 | 使用者怎么装 |
 |---|---|---|---|
-| **npm CLI**（推荐） | `powershell -File .\build_cli.ps1` | `dist\cs-debug-toolkit-1.0.0.tgz` | `npm i -g <tgz>` → `csdbg init` → `csdbg doctor` |
+| **npm CLI**（推荐） | `powershell -File .\build_cli.ps1` | `dist\cs-debug-toolkit-<ver>.tgz` | `npm i -g <tgz>` → `csdbg init` → `csdbg doctor` |
 | **zip 解包** | `powershell -File .\build_package.ps1` | `dist\cs-debug-toolkit.zip` | 解压 → `setup.ps1` |
 
-两者都带 `skill/` 下 4 个技能（`cs-log-cross` / `cs-rpa-log` / `cs-conversation-debug` / `e-chat-trace`），
+两者都带 `skill/` 下 5 个技能（`cs-log-cross` / `cs-router` / `cs-rpa-log` / `cs-conversation-debug` / `e-chat-trace`），
 装进 agent 技能目录后由各自的大模型完成最后的交叉论证——脚本层与大模型无关。
 
 - CLI 形态源码在 [`cli/`](cli/)（`bin/csdbg.js` 零第三方依赖）；配置与输出落 `~/.csdbg/`
@@ -59,9 +70,17 @@ cs-cli/
 │   ├── rpa_log_query.py         # ② RPA 端 SLS 日志查询（4 渠道）
 │   ├── rpa_log_report.py        #   RPA 日志 HTML 报告（辅助）
 │   ├── ops_log_query.py         # ③ 本地 cs-cli ops 运维日志查询
-│   └── cross_analysis.py        # ★ 四方交叉对齐 → 证据包（第④源 --host-bundle）
+│   ├── host_events_query.py     # ④ 目标设备 电源/重启/崩溃 事件（ECD 优先/SLS 心跳兜底）
+│   ├── cross_analysis.py        # ★ 四方交叉对齐 → 证据包（插件驱动，含故障签名匹配）
+│   ├── sources.py               # ★ 数据源插件层（DataSource 接口 + 注册表 build_sources）
+│   ├── fault_signatures.py      # ★ 故障签名知识库（加载/匹配/--match-dir 复检）
+│   ├── gap_analysis.py          #   平响排查：user→assistant 间隔 / duration / failed 签名统计
+│   ├── telemetry.py             #   可选本地埋点（CSDBG_TELEMETRY=1 启用，仅写本地）
+│   ├── selftest.py              #   离线自检（无网络/无 AK 验证工具链）
+│   └── legacy/                  #   旧版分析脚本（硬编码本机路径，仅历史参考，勿用于新排查）
 ├── skill/                       # ★ 单源 skill 定义（分发用，build_*.ps1 从这里取）
 │   ├── cs-log-cross/            #   四方交叉分析（主入口）
+│   ├── cs-router/               #   排查入口路由（meta-skill）
 │   ├── cs-rpa-log/              #   单源 RPA 日志
 │   ├── cs-conversation-debug/   #   单链路会话根因
 │   └── e-chat-trace/            #   消息全链路
@@ -75,37 +94,53 @@ cs-cli/
 │   │   ├── cs-rpa-log.md        # 单源：RPA 日志快速查询
 │   │   └── cs-conversation-debug.md  # 单链路：会话内单条回复根因 debug
 │   └── workflows/               # 低 token 混合 workflow（会话分析/延迟分析）
-├── templates/                   # HTML 报告模板
+├── templates/                   # HTML 报告模板 + fault_signatures.json（故障签名知识库）
 ├── temp/                        # ★ 功能区输出目录：证据包 + 分析结论（gitignore）
-└── docs/                        # PRD / 设计文档
+├── tests/                       # pytest 回归测试（离线，不依赖网络/AK）
+└── docs/                        # PRD / 设计文档 / troubleshooting.md（常见错误排障）
 ```
 
 ## 快速开始
 
 ```bash
 # 0. 环境检查（前三个源各一项；第④源无需认证）
+csdbg selftest                                # 离线自检：无 AK 也能验证工具链（依赖/证据包/时区）
+csdbg doctor                                  # 在线自检：含 SLS 连通性 + cs-cli 认证
 python3 scripts/server_log_query.py --check   # SLS 服务端
 python3 scripts/rpa_log_query.py --check      # SLS RPA 端
 python3 scripts/ops_log_query.py --check      # 本地 cs-cli 认证
 
 # 1. 一键交叉取证（生成证据包）
 python3 scripts/cross_analysis.py \
-  --conversation-id 68a04b1770a442889ed175de395700cf \
+  --conversation-id 0123456789abcdef0123456789abcdef \
   --channel pinduoduo \
   --start "2026-09-18T22:30:00" --end "2026-09-18T23:10:00"
 
+# 1b. 第④源专项：目标设备 电源/重启/崩溃 事件（固化排查流程，无需拷脚本）
+python3 scripts/host_events_query.py --equipment-id "<设备ID>" \
+  --start "2026-09-21T00:00:00" --end "2026-09-22T23:59:59" [--save host_events.txt]
+#     或直接并入四方证据包：
+python3 scripts/cross_analysis.py --conversation-id <id> \
+  --start <ISO> --end <ISO> --host-events-equipment "<设备ID>"
+
 # 2. 交叉论证 + 出结论（在项目目录内使用 Claude Code）
-/cs-log-cross 68a04b1770a442889ed175de395700cf 为什么 22:42 那条消息用户没收到？
+/cs-log-cross 0123456789abcdef0123456789abcdef 为什么 22:42 那条消息用户没收到？
 #    → 结论自动写入 temp/analysis_20260918-2245-<slug>.md
 ```
 
-## 可用 Skills（slash commands）
+## 可用 Skills
 
 | Skill | 定位 | 输入 | 结论输出 |
 |-------|------|------|---------|
 | **`/cs-log-cross`** | ★ 四方日志交叉分析定责 | 锚点 ID/关键词 + 时间窗口 + 问题描述 | `temp/analysis_*.md` |
+| `/cs-router` | 排查入口路由（meta-skill：按问题类型选工具） | 问题描述 | 路由建议 |
 | `/cs-rpa-log` | 单源：RPA 日志查询 | 渠道 + 设备/会话/关键词 | 终端/JSON |
 | `/cs-conversation-debug` | 单链路：会话消息根因 debug | `conversation_id` | 终端 |
+| `/e-chat-trace` | 消息全链路排查（Agent trace + RPA 收发自动串联） | `conversation_id` | 终端（不落盘） |
+
+> `/e-chat-trace` 是 `skill/` 下的独立技能（非 slash command，`.claude/commands/` 未内置入口）：
+> 读环境变量 `ALIYUN_ACCESS_KEY_ID/ALIYUN_ACCESS_KEY_SECRET` 直连 SLS，不经 `channels.json`；
+> 本机要直接用可引用 `skill/e-chat-trace/SKILL.md`，或按需在 `.claude/commands/` 补建入口。
 
 ## 环境要求
 
@@ -133,7 +168,8 @@ python3 scripts/cross_analysis.py \
 | 证据包 | `temp/evidence_<YYYYmmdd_HHMMSS>_<slug>/` | 各源原始日志 + 对齐结果，供复核 |
 | **分析结论** | `temp/analysis_<YYYYMMDD-HHMM>-<slug>.md` | **功能区最终交付物**：结论先行、时间轴对齐、交叉论证、根因判定、建议 |
 
-`temp/` 全部内容不入库（`.gitignore`），是工作产物区。
+`temp/` 全部内容不入库（`.gitignore`），是工作产物区；其中已沉淀多轮历史排查目录
+（`evidence_*` 证据包、各店铺/日期命名的案例目录），可作案例复盘与错误模式沉淀参考。
 
 ## 与全局 cs-* skills 的关系
 
@@ -142,7 +178,9 @@ python3 scripts/cross_analysis.py \
 
 ## 参考资源
 
-- PRD：[docs/PRD-002-cross-log-analysis.md](docs/PRD-002-cross-log-analysis.md)（本功能区需求）  
+- PRD：[docs/PRD-002-cross-log-analysis.md](docs/PRD-002-cross-log-analysis.md)（本功能区需求）
+- 排障：[docs/troubleshooting.md](docs/troubleshooting.md)（常见错误 → 处置索引）
+- 变更：[CHANGELOG.md](CHANGELOG.md) · 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
 - 控制台入口：[服务端日志](https://sls.console.aliyun.com/lognext/project/bty-prod-ack-log/logsearch/customer-servhub-api?slsRegion=cn-hangzhou) · [RPA 日志](https://sls.console.aliyun.com/lognext/project/customer-servhub-log/overview?slsRegion=cn-hangzhou)
 - cs-cli 官方 README：`%APPDATA%/npm/node_modules/@bty/customer-service-cli/README.md`
 

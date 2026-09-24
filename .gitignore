@@ -1,0 +1,37 @@
+# 打包产物（build_package.ps1 输出）
+dist/
+
+# AK 敏感信息 - 不能提交
+scripts/channels.json
+scripts/leak_patterns.json
+
+# 生成的报告和临时数据
+*.json.bak
+rpa_log_*.json
+rpa_log_report_*.html
+conv_*.json
+delay_*.json
+delay_report.*
+target_convs_*.json
+
+# 交叉分析功能区产物（temp 为工作输出区，不入库；保留说明文件）
+temp/*
+!temp/README.md
+
+# Python 临时文件
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 本地开发配置（Claude Code），含案例数据，不分发
+.claude/
