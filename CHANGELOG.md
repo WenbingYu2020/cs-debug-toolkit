@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.1] - 2026-09-25
+
+### Fixed
+
+- **子命令拼错给候选提示**：`csdbg docto` 现在会多打一行 `是否想用 csdbg doctor ？`
+  （编辑距离 ≤2 匹配，乱输入不给误导候选）——此前只有一行「未知子命令」，
+  新手容易误判成"装坏了"。覆盖 init/doctor/selftest/install/paths/env/host-pull/version
+  与全部透传子命令（server/rpa/ops/cross/gap/host-events/signatures）。
+
+### Docs
+
+- `docs/troubleshooting.md` 新增三条速查：新版 npm 的 `install-scripts ... allowScripts` 警告
+  **可忽略**（本包 postinstall 只打印欢迎语）；`npm i -g --allow-scripts=...` **漏包名**会让 npm
+  去当前目录找 `package.json` 并报 `ENOENT`（npm 提示语不完整导致的坑）；升级后技能仍是旧的
+  → 需 `csdbg install` 刷新 agent 技能目录。
+- `cli/README.md` 安装小节加同款提示（含正确写法）。
+
+
 ## [1.3.0] - 2026-09-25
 
 ### Added

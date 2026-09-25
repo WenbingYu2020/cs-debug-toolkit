@@ -699,11 +699,43 @@ function main(argv) {
     case 'env': return cmdEnv();
     case 'host-pull': return cmdHostPull(rest);
     case 'version': info(pkgVersion()); return 0;
-    default:
+    default: {
       fail(`未知子命令: ${cmd}`);
+      const guess = suggestCommand(cmd);
+      if (guess) info(`是否想用 ${cyan('csdbg ' + guess)} ？`);
       info(`跑 ${cyan('csdbg help')} 看用法。`);
       return 2;
+    }
   }
+}
+
+// 拼错子命令时给一个候选（编辑距离 ≤2），避免"少打一个字母"直接失败
+function suggestCommand(input) {
+  const names = ['init', 'doctor', 'selftest', 'install', 'paths', 'env', 'host-pull', 'version', 'help']
+    .concat(Object.keys(PASSTHROUGH));
+  const dist = (a, b) => {
+    const m = a.length;
+    const n = b.length;
+    const d = Array.from({ length: m + 1 }, (_, i) => [i].concat(new Array(n).fill(0)));
+    for (let j = 0; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        d[i][j] = Math.min(
+          d[i - 1][j] + 1,
+          d[i][j - 1] + 1,
+          d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+        );
+      }
+    }
+    return d[m][n];
+  };
+  let best = null;
+  let bestScore = 3;                       // 最多容忍 2 个字符的差
+  for (const n of names) {
+    const s = dist(input.toLowerCase(), n);
+    if (s < bestScore) { bestScore = s; best = n; }
+  }
+  return best;
 }
 
 process.exit(main(process.argv.slice(2)));
