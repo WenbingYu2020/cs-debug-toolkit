@@ -23,6 +23,9 @@
 | 心跳断流但分不清 睡眠/崩溃 | 缺第④源 | 证据包会出现「第④源升级建议」，按提示补 `--host-events-equipment <设备ID>` |
 | `temp/` 磁盘膨胀 | 证据包堆积 | 默认自动归档最旧 evidence_* 为 zip（保留 5 个）；`CSDBG_EVIDENCE_KEEP=10` 调整，`CSDBG_NO_ARCHIVE=1` 关闭 |
 | `csdbg` 命令找不到 | 未全局安装 | `npm i -g cs-debug-toolkit`；或 zip 形态改用 `python scripts/xxx.py` |
+| 安装后出现 `install-scripts ... not yet covered by allowScripts` 警告 | 新版 npm（带脚本门禁）**未执行** postinstall | **可忽略**：本包 postinstall 只打印欢迎语，不装技能、不写配置；技能靠 `csdbg install`。想让脚本执行：`npm i -g --allow-scripts=cs-debug-toolkit <包/URL>`（**必须带包名**，否则 npm 会去当前目录找 `package.json` 并报 ENOENT） |
+| `npm error ENOENT ... /Users/<you>/package.json` | `npm install -g --allow-scripts=...` 后**漏了包名**，npm 当成"安装当前目录" | 把包名/URL 补上：`npm i -g <URL>`（allow-scripts 已在 `.npmrc` 时无需再传该参数） |
+| 升级后技能还是旧的（数量不对） | `npm i -g` 只换包本体，**不刷新 agent 技能目录** | 跑 `csdbg install`（装到 `~/.agents/skills` 与 `~/.claude/skills`），然后重启 agent 会话 |
 
 ## 分节说明
 

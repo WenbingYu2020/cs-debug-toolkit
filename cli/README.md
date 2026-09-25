@@ -24,6 +24,14 @@ npm install -g cs-debug-toolkit-<ver>.tgz && csdbg init -i
 
 ---
 
+
+> **新版 npm 的脚本门禁（2026-09-25 实测）**：安装时可能出现
+> `install-scripts ... not yet covered by allowScripts` 警告——**可忽略**：
+> 本包 postinstall 只打印欢迎语，不装技能、不写配置。若想让脚本执行，把包名一起给：
+> `npm i -g --allow-scripts=cs-debug-toolkit <tgz/URL>`；**漏了包名** npm 会去当前目录找
+> `package.json` 并报 `ENOENT .../package.json`（npm 自己的提示语不完整，容易踩）。
+> 无论是否执行 postinstall，装完都要跑 `csdbg install` 刷新 agent 技能目录，否则技能还是旧版。
+
 ## 分步安装
 
 ```bash
