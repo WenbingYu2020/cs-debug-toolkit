@@ -1,11 +1,11 @@
-import json, subprocess, statistics, datetime
+import json, os, subprocess, statistics, datetime
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 
-CS = r"C:\Users\13328\AppData\Roaming\npm\cs-cli.cmd"
+CS = os.environ.get("CS_CLI") or r"%APPDATA%\npm\cs-cli.cmd"  # 按需改成本机 cs-cli 路径
 
-WS = "93edd013139742409019a062d80aa52d"
-AGENT = "e1b19a826e4b4c5f951b4b43b2ff54b5"
+WS = "0123456789abcdef0123456789abcdef"
+AGENT = "0123456789abcdef0123456789abcdef"
 
 def parse(raw):
     d, _ = json.JSONDecoder().raw_decode(raw)

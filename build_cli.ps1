@@ -51,9 +51,12 @@ Get-ChildItem -Directory (Join-Path $src 'skill') | Where-Object {
 # 4. templates/（HTML 报告模板）
 Copy-Item -Recurse (Join-Path $src 'templates') $stage
 
-# 4b. docs/（排障文档等，随包分发便于新手自助）
+# 4b. docs/（排障文档 + 排查报告规范与 HTML 模板，随包分发便于新手自助）
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'docs') | Out-Null
-Copy-Item (Join-Path $src 'docs\troubleshooting.md') (Join-Path $stage 'docs')
+Copy-Item (Join-Path $src 'docs\troubleshooting.md')   (Join-Path $stage 'docs')
+Copy-Item (Join-Path $src 'docs\REPORT_STANDARD.md')  (Join-Path $stage 'docs')
+Copy-Item (Join-Path $src 'docs\RISK_REVIEW.md')      (Join-Path $stage 'docs')
+Copy-Item -Recurse (Join-Path $src 'docs\templates')  (Join-Path $stage 'docs')
 
 # 5. 质量门 A：package.json 结构 + bin 目标存在
 #    (显式 -Encoding UTF8：package.json 无 BOM，PS 5.1 默认按 ANSI 读会把中文读乱)
@@ -113,6 +116,14 @@ if (Test-Path $leakConfigPath) {
   }
 } else {
   Write-Host "⚠ 未找到 leak_patterns.json，跳过泄漏检测（不建议）" -ForegroundColor Yellow
+}
+
+# 7b. 质量门 C2：源码树公开内容扫描（不只扫分发包——docs/ tests/ skill/ 不入包但会进公开仓库）
+$leakScan = Join-Path $src 'scripts\leak_scan.py'
+if ($py -and (Test-Path $leakScan)) {
+  $scanOut = & $py @args $leakScan --quiet 2>&1
+  if ($LASTEXITCODE -ne 0) { $scanOut | ForEach-Object { Write-Host $_ }; throw "源码树扫描发现疑似泄漏（先跑 python scripts\leak_scan.py 看明细），终止打包" }
+  Write-Host "源码树泄漏扫描: 干净" -ForegroundColor Green
 }
 
 # 8. 清理质量门带入的 __pycache__

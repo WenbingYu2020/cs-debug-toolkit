@@ -15,14 +15,14 @@ class TestNormalizeRpa:
     def test_extracts_ids_from_message(self):
         raw = [{
             "__time__": 1000,
-            "message": "conv=dbc7a1d886834093b1a895cbb34551e0 task=abc12345abc12345 done",
+            "message": "conv=0123456789abcdef0123456789abcdef task=abc12345abc12345 done",
             "level": "INFO",
         }]
         recs = ca.normalize_rpa(raw, "douyin")
         assert len(recs) == 1
         r = recs[0]
         assert r["source"] == "rpa:douyin"
-        assert "dbc7a1d886834093b1a895cbb34551e0" in r["ids"]["conversation_id"]
+        assert "0123456789abcdef0123456789abcdef" in r["ids"]["conversation_id"]
         assert "abc12345abc12345" in r["ids"]["task_id"]
 
     def test_extra_conversation_id_field(self):

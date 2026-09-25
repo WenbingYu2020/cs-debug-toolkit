@@ -61,10 +61,10 @@ scripts/cross_analysis.py     FR-4（编排三源 → anchors.json / timeline / 
 |----|------|
 | `server_log_query.py --check` | ✅ bty-prod-ack-log/customer-servhub-api 连通 |
 | `rpa_log_query.py --check` | ✅ 修复 `project`→`rpa_project` 键兼容后通过 |
-| `ops_log_query.py --check` | ✅ cs-cli 认证（今朝【斑头雁】）|
-| 真实会话端到端：conv=`68a04b17…00cf`，窗口 22:30~23:10 | server 726 条 / rpa:pinduoduo 13 条 / ops 0 条 |
+| `ops_log_query.py --check` | ✅ cs-cli 认证通过|
+| 真实会话端到端：conv=`<conv_id>…00cf`，窗口 22:30~23:10 | server 726 条 / rpa:pinduoduo 13 条 / ops 0 条 |
 | 锚点命中矩阵 | ✅ conversation_id 命中 server=639 / rpa=13 |
-| 跨源 ID 共现 | ✅ `68a04b17…` 在 server+RPA 双源共现（修复 RPA `conv=` 抽取后）|
+| 跨源 ID 共现 | ✅ `<conv_id>…` 在 server+RPA 双源共现（修复 RPA `conv=` 抽取后）|
 | 合并时间线 | ✅ 下发→接收→SOP→回发按秒对齐，WARNING 加 ⚠ |
 
 ## 五、边界

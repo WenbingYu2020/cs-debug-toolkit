@@ -25,7 +25,12 @@
         "事件链仅 MESSAGE_READ，无 PROCESSING_MESSAGES"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["没有消息需要处理"], "min_count": 1}
+        "server": {
+          "regex_all": [
+            "没有消息需要处理"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "历史转人工会话复发、会话状态固化 running_state=running，AI 侧守卫误判跳过 → 消息零派发。修复方向：状态复位分支覆盖同设备复发（而非仅设备/客服变更时）。"
     },
@@ -40,7 +45,12 @@
         "debug reproduce 报「聊天记录不存在」= AI 零调用铁证"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["has_manual_takeover"], "min_count": 1}
+        "server": {
+          "regex_all": [
+            "has_manual_takeover"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "会话残留粘性人工接管标记 → AI 跳过接管。同根于「陈旧状态残留」家族（第十五型）。"
     },
@@ -55,7 +65,12 @@
         "同会话二次 route-to-a-live-agent"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["未命中任何规则"], "min_count": 1}
+        "server": {
+          "regex_all": [
+            "未命中任何规则"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "延迟上报导致会话重建、已转人工状态丢失 → AI 基于历史重判并二次转人工。修复方向：重建会话时同步转移接管状态。"
     },
@@ -70,7 +85,12 @@
         "系统继续重试转接 30min+，同会话多次转人工"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["转交给"], "min_count": 1}
+        "server": {
+          "regex_all": [
+            "转交给"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "千牛平台手动接待与系统转接链路脱节：人工已接管但系统不更新 assistant_id，RPA 无感知并持续重试转接。"
     },
@@ -85,7 +105,12 @@
         "延迟本质 = 人工上线时间，非 AI/链路故障"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["no_human_online"], "min_count": 1}
+        "server": {
+          "regex_all": [
+            "no_human_online"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "转人工派发时接待组无人在线 → 待转工单重试至人工上线。属业务排班问题，人工响应不计 AI 平响。"
     },
@@ -99,7 +124,12 @@
         "常与其他根因叠加（AI 静默/内容缺陷/业务断供）形成 100s+ 长尾"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["customer-reply-timeout"], "min_count": 1}
+        "server": {
+          "regex_all": [
+            "customer-reply-timeout"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "触发客服超时兜底转人工。需继续定位「为什么超时」：查 AI 是否被调用、内容是否被拦、额度是否可用。"
     },
@@ -114,7 +144,13 @@
         "同空间多会话同时段受影响"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["积分", "不足|耗尽"], "min_count": 1}
+        "server": {
+          "regex_all": [
+            "积分",
+            "不足|耗尽"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "业务断供型：额度耗尽导致 AI 能力失效。优先恢复额度并确认充值状态。"
     },
@@ -129,7 +165,12 @@
         "非技术故障，属业务规则"
       ],
       "evidence_pattern": {
-        "rpa": {"regex_all": ["黑名单"], "min_count": 1}
+        "rpa": {
+          "regex_all": [
+            "黑名单"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "店铺黑名单导致消息拒发且不计回复，平台统计形成长尾。非故障。"
     },
@@ -144,7 +185,12 @@
         "unread_message_special_types 整包判死转人工（AI 零调用）"
       ],
       "evidence_pattern": {
-        "rpa": {"regex_all": ["消息范围: all"], "min_count": 1}
+        "rpa": {
+          "regex_all": [
+            "消息范围: all"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "RPA 无锚点整窗上报把历史特殊类型消息当新消息 → 整包判死转人工。修复方向：上报前按锚点/时间过滤。"
     },
@@ -160,8 +206,18 @@
         "截图常证明会话真实存在（「顾客找不到」是冷却文案）"
       ],
       "evidence_pattern": {
-        "rpa": {"regex_all": ["空会话"], "min_count": 1},
-        "server": {"regex_all": ["会话无任何消息内容"], "min_count": 1}
+        "rpa": {
+          "regex_all": [
+            "空会话"
+          ],
+          "min_count": 1
+        },
+        "server": {
+          "regex_all": [
+            "会话无任何消息内容"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "RPA 定位校验连续判空 → 异常会话丢弃 + 放弃冷却吞掉转人工。是 RPA 探测/冷却机制缺陷，非客户会话不存在。"
     },
@@ -176,7 +232,15 @@
         "按「无新消息」跳过 → 真实消息漏读（平台无记录）"
       ],
       "evidence_pattern": {
-        "rpa": {"regex_all": ["锚点"], "regex_any": ["丢失|失效"], "min_count": 1}
+        "rpa": {
+          "regex_all": [
+            "锚点"
+          ],
+          "regex_any": [
+            "丢失|失效"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "千牛面板陈旧导致增量锚点失效、消息漏读。修复方向：锚点缺失时回落整窗扫描。"
     },
@@ -191,7 +255,12 @@
         "同窗口 route-to-a-live-agent 次数显著偏多"
       ],
       "evidence_pattern": {
-        "server": {"regex_all": ["route-to-a-live-agent"], "min_count": 3}
+        "server": {
+          "regex_all": [
+            "route-to-a-live-agent"
+          ],
+          "min_count": 3
+        }
       },
       "conclusion_template": "转人工回飘风暴：需在派发侧加幂等/合并，避免同会话重复转接。"
     },
@@ -206,7 +275,12 @@
         "多设备同时段启动失败 → 前者重启主机，后者清缓存"
       ],
       "evidence_pattern": {
-        "rpa": {"regex_any": ["内存资源不足|CreateProcess|UIA业务树"], "min_count": 1}
+        "rpa": {
+          "regex_any": [
+            "内存资源不足|CreateProcess|UIA业务树"
+          ],
+          "min_count": 1
+        }
       },
       "conclusion_template": "京东 RPA 启动失败两类：内存型需重启主机释放；UIA 型需清理客户端缓存。"
     },
@@ -248,6 +322,170 @@
       ],
       "evidence_pattern": {},
       "conclusion_template": "平台口径与 AI 平响口径不一致造成的统计假象，非系统故障。报告中注明口径差异即可。"
+    },
+    {
+      "id": "shop-name-mismatch-stall",
+      "type": "第十九型",
+      "name": "中控下发店铺名与平台可选店铺不一致 → 选店失败卡死",
+      "severity_hint": "故障",
+      "signature": [
+        "RPA shop_selector：「候选店铺名（按优先级）: [...] ，页面可选店铺: [...]」→「页面上未找到店铺X」→「均未在页面上找到」（每3s一拍持续数小时）",
+        "handle_login_recovery：「④ 页面停在「请选择店铺」页，先完成选店...」→「执行失败 - action=send_code: 停在「请选择店铺」页且选店失败」",
+        "register-client-config 的 shop_id 字段值 = 店铺名称字符串（非平台店铺ID），extra_shop_id 同值",
+        "★★ 定位「有ID却没走ID」：选店先判「配置里 channel_login_shop_id 是否非空」，非空才打「检测到配置 channel_login_shop_id=…，优先通过店铺 ID 匹配」；对照 register-client-config 是否带该字段——带的多店铺场景会走 ID 分支成功，不带的走名称分支（横评 3/3 vs 0/5）；字段仅在 robot-config-changed 里补发过、注册报文里没有 → 选店读不到（17 次配置变更日志无一行涉及该字段）。修法：让该设备重新注册/重启使其进注册配置",
+        "★ ID 通道对照：中控其实在 robot-config-changed 下发真实数字店铺ID channel_login_shop_id；故障时段检索该字段 0 命中 = 已下发的ID未被使用；对照他机同路径会打印「检测到配置 channel_login_shop_id=…，优先通过店铺 ID 匹配」→「已通过店铺 ID 命中」",
+        "中控 rpa_jobs：「连续 N 次发送 power_on 指令未生效,需人工介入」",
+        "★ 反查实际店铺（定责/修复用）：RPA 上报通道可比对真值——robot-sync-cookie-result 的 Cookie name=SHOP_ID / ecom_gray_shop_id（登录页/选店页时为空）、receive-message 的 $.data.order_data[0].shop_id/.shop_name（有订单时才带）；与配置的 channel_login_shop_id 比对，可判定是「绑定名错」还是「ID 也错」"
+      ],
+      "evidence_pattern": {
+        "rpa": {
+          "regex_all": [
+            "均未在页面上找到"
+          ],
+          "min_count": 1
+        }
+      },
+      "conclusion_template": "飞鸽登录态过期→自动重登成功但落到「请选择店铺」页；选店走名称匹配，该名不在页面可选店铺列表中→重试必然失败并卡死到人工介入为止。两条线取证：①名称线——register-client-config 的 shop_name/shop_id 是否等于页面可选店名；②ID线——配置 channel_login_shop_id 是否非空且进过【注册/启动配置】（只在 robot-config-changed 补发过的往往不生效，判别=故障时段检索该字段 0 命中即未走 ID 分支）；③真值线——用 RPA 上报的 Cookie SHOP_ID / order_data[].shop_id+shop_name 反查实际接待店铺。修复方向：绑定名/ID 对齐实际店铺 + 重新注册让 channel_login_shop_id 进启动配置（或让 config-changed 的该字段写入选店读取处）+ 选店失败 N 次即升级告警。"
+    },
+    {
+      "id": "panel-blank-scrollwrap",
+      "type": "面板白屏",
+      "name": "消息面板容器丢失（scrollWrap 消失）→ 全会话零上报",
+      "severity_hint": "故障",
+      "signature": [
+        "消息对话框容器未找到（jdwb）：共枚举 N 个 Chrome 帧，均无 scrollWrap（30s 一拍持续复现）",
+        "逐会话 用户名校验超时，消息列表=None，probe_state='unavailable'，跳过",
+        "同时段心跳 30s 零空窗、CPU 正常（进程级全绿）",
+        "桌面帧显示消息区整块白屏、左侧会话列表正常"
+      ],
+      "evidence_pattern": {
+        "rpa": {
+          "regex_all": [
+            "消息对话框容器未找到"
+          ],
+          "min_count": 3
+        }
+      },
+      "conclusion_template": "京麦网页消息面板渲染态损坏：RPA 能枚举会话但读不到消息，逐会话跳过且无刷新/降级兜底 → 账号级零服务，而心跳/CPU 全绿导致监控无感。定责 R0 RPA；判别=现场刷新页面（恢复即证实渲染态损坏），并对比同店铺同版本其它设备。"
+    },
+    {
+      "id": "dedup-skip-silent-stall",
+      "type": "去重拦截",
+      "name": "重复消息去重整批跳过 → 状态机假挂起",
+      "severity_hint": "故障",
+      "signature": [
+        "send_results 含「服务端检测重复消息，跳过推送」",
+        "event_record 停在 REPLY_MESSAGE，无后续状态推进",
+        "被拦记录指向的用户消息无任何 success 回复（漏答）"
+      ],
+      "evidence_pattern": {
+        "server": {
+          "regex_all": [
+            "服务端检测重复消息"
+          ],
+          "min_count": 1
+        }
+      },
+      "conclusion_template": "去重策略把本应发送的回复整批拦下：若被拦记录指向的用户消息无 success 回复即造成漏答与会话假挂起。用 dup_skip_audit.py 判定 harmful/无害。"
+    },
+    {
+      "id": "account-name-case-mismatch",
+      "type": "第十八型",
+      "name": "账号名大小写/全半角不一致 → 主窗口未找到",
+      "severity_hint": "故障",
+      "signature": [
+        "咚咚主窗口未找到 类告警（通用文案，需人工二分）",
+        "平台侧显示名与系统配置名逐字符不同（大小写/空格/全半角）",
+        "同版本其它设备正常 → 排除版本普遍缺陷",
+        "★ 必需旁证：截图逐字符放大核对账号名（小字号下 AI 与 ai 不可辨）"
+      ],
+      "evidence_pattern": {
+        "rpa": {
+          "regex_any": [
+            "主窗口未找到|窗口未找到"
+          ],
+          "min_count": 1
+        }
+      },
+      "conclusion_template": "账号名匹配大小写敏感 → 归入「主窗口未找到」通用告警，probe/注入链永不触发。修复=统一命名或改为大小写不敏感匹配；判别必须逐字符比对截图。"
+    },
+    {
+      "id": "host-resource-freeze",
+      "type": "主机资源",
+      "name": "主机资源饱和 → 会话冻结/客户端退出后自愈",
+      "severity_hint": "故障",
+      "signature": [
+        "robot-health-report 心跳断流（30s 一条出现空窗），断流窗 ⊂ 服务端长尾窗",
+        "主机 CPU/内存打满；同主机其它账号同时段同症",
+        "ECD 侧无计划外重启事件（有事件则为电源/崩溃类）"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "主机资源饱和导致 RPA 冻结/客户端退出，恢复后自愈。判别关键=心跳断流 + 无电源事件 + 资源读数高；有电源/崩溃事件时应转主机层故障定性。"
+    },
+    {
+      "id": "ai-silent-content-defect",
+      "type": "AI 内容缺陷",
+      "name": "AI 有调用但内容被静默丢弃 → 超时兜底长尾",
+      "severity_hint": "故障",
+      "signature": [
+        "服务端有生成记录但无发送/回执；RPA 侧无下发记录",
+        "常与 customer-reply-timeout 叠加形成 100s+ 长尾",
+        "常见于卡片/售后等特殊内容形态"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "日志链在「生成→发送」之间断裂：属 AI 内容链路缺陷（非链路不通）。修复方向=发送失败要有显式回执与重试。"
+    },
+    {
+      "id": "popup-overlay-retry-storm",
+      "type": "交互阻塞",
+      "name": "弹窗/浮层遮挡点击 → 重试风暴串行阻塞",
+      "severity_hint": "故障",
+      "signature": [
+        "工作台弹窗 leave 动画残留层遮挡切会话点击",
+        "点击失败后重试风暴，主循环被串行阻塞（收发双向延迟）",
+        "agent_duration 持平、同空间其它账号正常 → 定界到单机"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "RPA 交互被浮层阻塞而非服务端变慢：以「同空间其它账号正常 + agent 端持平」定界，修复方向=点击前等待浮层消失 + 重试退避。"
+    },
+    {
+      "id": "network-jitter-egress",
+      "type": "网络抖动",
+      "name": "云桌面出口网络抖动（打在有话务窗内才算成因）",
+      "severity_hint": "故障",
+      "signature": [
+        "同时段多渠道/多设备 RPA 收发延迟同步升高",
+        "心跳 WS 重连或 ping 超时；服务端侧无对应异常",
+        "★ 判别：抖动窗内必须有话务，否则只是背景噪声"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "出口网络抖动：以「多设备同时段 + 服务端正常 + 窗内有话务」三条件成立才可作为成因，否则列为噪声并继续找主因。"
+    },
+    {
+      "id": "shop-offhours-backlog",
+      "type": "非故障·口径",
+      "name": "班前积压 vs 平台评估窗错配 → 平响假高",
+      "severity_hint": "非故障",
+      "signature": [
+        "消息到达集中在店铺上班前时段；平台评估窗包含班前积压",
+        "服务端 AI 处理时长正常、响应间隔分布正常",
+        "次日或错峰后指标自行恢复"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "店铺上班时间与平台评估窗口错配造成的统计假象（非故障）：客户消息在下班时段到达、上班后才被回复。报告写入口径差异即可。"
+    },
+    {
+      "id": "transfer-to-human-response-delay",
+      "type": "第九型",
+      "name": "转人工后人工响应延迟（非 AI 平响）",
+      "severity_hint": "非故障",
+      "signature": [
+        "AI 判定 3s / 转人工 11s 均正常，延迟发生在转接成功之后",
+        "人工首条回复时间 - 转接成功时间 = 主要延迟",
+        "人工响应不计入 AI 平响口径"
+      ],
+      "evidence_pattern": {},
+      "conclusion_template": "延迟本质为人工响应（排队/上线）时间：AI 与转接链路正常，不构成 AI 平响故障；如需优化属排班/工单侧。"
     }
   ]
 }

@@ -12,7 +12,7 @@ allowed-tools: Read, Bash
 
 # cs-router · 排查入口路由（meta-skill）
 
-四个技能功能有重叠，按**问题类型**路由到正确的入口。
+各技能功能有重叠，按**问题类型**路由到正确的入口；现象已能归到具体故障类型时，直接走 `cs-fault-playbook`。
 
 ## 决策表
 
@@ -23,6 +23,7 @@ allowed-tools: Read, Bash
 | "消息全链路（含千牛/京东 IM 层收发）" | `e-chat-trace` | Agent trace + RPA 收发自动串联 |
 | **"为什么超时/没回复/定责/根因"（跨端）** | **`cs-log-cross`** | 四方交叉（服务端×RPA×运维×主机），结论可复核 |
 | 平响类 KPI 数据核对（日均值 vs 服务端真值） | `cs-log-cross` + `csdbg gap` | gap_analysis 出 user→assistant 间隔统计 |
+| 现象像「老问题」（已知故障类型） | `cs-fault-playbook` | 22 类故障的标准查询流程与判定判据，避免从零摸索 |
 | 设备离线/电源/重启/崩溃实锤 | `cs-log-cross --host-events-equipment` 或 `csdbg host-events` | 第④源专项；ECD 实锤优先 |
 
 ## 路由速记

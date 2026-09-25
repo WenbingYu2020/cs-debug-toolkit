@@ -7,7 +7,8 @@ description: |
   (customer-servhub-log 各渠道) + ③ 本地 cs-cli ops 运维日志 +
   ④ 主机/IP 侧证据（SLS 的 hostname/出口IP/心跳 + 主机本地 Windows 事件日志），
   按锚点（会话/trace/request/dispatch/关键词）+ 时间窗口拉取，交叉论证得出问题结论。
-  最终分析报告写入 <TOOLKIT>/temp/。
+  最终分析报告落交付目录（本机 cs-cli 项目环境：`D:\temp\<客服账号名>\`；
+  外部分发包环境：`<TOOLKIT>/temp/`）。
   触发词：交叉分析、多方日志、日志交叉论证、cs-log-cross、四方交叉、
   服务端+RPA+运维+主机日志、结合日志分析这个问题、日志对齐、主机日志、
   设备电源事件、设备重启、崩溃事件、主机重启/睡眠/崩溃。
@@ -49,7 +50,10 @@ allowed-tools: Bash, Read, Write
   拿到后重跑一次带 `--host-bundle` 的 `cross_analysis.py`，或对已有证据包补做该参数。
 
 四方由 `<TOOLKIT>/scripts/cross_analysis.py` 统一编排，产出证据包到 `temp/evidence_*/`；
-**分析结论**（本技能最后一步）写入 `temp/analysis_*.md`。
+**分析结论报告**（本技能最后一步）落报告交付目录——本机 cs-cli 项目环境写
+`D:\temp\<客服账号名>\`（见 `docs/REPORT_STANDARD.md` §5.1），外部分发包环境写 `<输出目录>/analysis_<时间戳>-<slug>.md`；
+证据去向：外部分发包环境把证据包与中间产物留在 `<输出目录>`；本机 cs-cli 环境归到
+`D:\temp\<客服账号名>\证据区\screenshots\`（**证据区只有 screenshots**；原始 json/日志与一次性脚本不留存），报告正文用相对路径引用。
 
 ## 路径约定（先读）
 
@@ -208,10 +212,26 @@ python scripts/cross_analysis.py --conversation-id "<conv_id>" \
 （给出可直接复制运行的 `server_log_query.py` / `rpa_log_query.py` 命令行；
 缺主机本地面时给出 `collect_rpa_logs.ps1` 的完整参数）。
 
-### Step 4 — 输出结论到 temp/（必做，工具包交付物）
+### Step 4 — 输出结论报告（必做，交付物）
 
-写文件：`<输出目录>/analysis_<YYYYMMDD-HHMM>-<slug>.md`
-（`<输出目录>` = 形态 A 的 `~/.csdbg/temp`，或形态 B 的 `<TOOLKIT>/temp`；拿不准就 `csdbg paths` 看 `temp` 行）
+文件名：`analysis_<YYYYMMDD-HHMM>-<slug>.md`，**存放目录按环境二选一**：
+
+- **本机 cs-cli 项目环境（内部排查，默认）**：`D:\temp\<客服账号名>\`
+  —— 先校验 `D:\temp` 是否存在、再校验账号子目录是否存在，**不存在才创建，已存在直接写入**（`mkdir` 幂等）；
+  `<客服账号名>` 取本次排查命中的客服子账号昵称（`client_username`/assistant 昵称），
+  无法归属到具体账号时用 `<渠道>-<店铺简称>` 或 `<渠道>-<设备简称>`；
+  本次分析必须的辅助佐证报告与最终报告**同放这个账号目录**。
+- **外部分发包环境**：`<输出目录>`（形态 A 的 `~/.csdbg/temp`，或形态 B 的 `<TOOLKIT>/temp`；拿不准就 `csdbg paths` 看 `temp` 行）。
+
+证据归置：外部分发包环境把证据包 `evidence_*/`、脚本与中间数据留在 `<输出目录>`；
+**本机 cs-cli 环境**统一落 `D:\temp\<客服账号名>\证据区\screenshots\`（**只有这一个子目录**；`sls/` `host/` `scripts/` 不创建），
+原始 json/日志与一次性脚本一概不留存——报告须内嵌关键证据原文与复现命令，报告里不写已删文件路径（详见 `docs/REPORT_STANDARD.md` §5.2）。
+
+**报告硬性两项（2026-09-25 起）**：
+1. **溯源数据源定责（六源）**：表格 `数据源 | 定责结论 | 依据 | 备注`，固定顺序 **服务端 → agent → RPA → host/IP → 渠道平台 → 运维服务**；
+**双写**：定责表必须同时出现在 `_FINAL_REPORT.md` 与 `_report.html`（同源同数据、等级一致），只写一处不合格。
+   每条给三态之一：有责（写责任点）/ 排除（写判据）/ 数据缺口（写盲区+补数建议）；并列 **责任等级 R0 主责 / R1 次责 / R2 待定 / R3 无责**（R=谁的锅，与建议 P0–P2 分开）。原「四方」为取证手段，定责按六源出。
+2. **ID 完整**：设备 ID（equipment_information_id）与会话 ID（conversation_id）**必须完整 32 位，禁止 `…` 省略**（含正文/表格/时间线/HTML 结论卡）。
 
 ```markdown
 # 多方日志交叉分析报告

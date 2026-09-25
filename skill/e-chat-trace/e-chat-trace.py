@@ -767,8 +767,8 @@ def main():
         print("Usage: e-chat-trace.py <conversation_id> [target_message]")
         print()
         print("Examples:")
-        print("  e-chat-trace.py eb27d27901214b36a75223a2bc5f62a1")
-        print("  e-chat-trace.py eb27d27901214b36a75223a2bc5f62a1 '您好，很高兴为您服务。'")
+        print("  e-chat-trace.py 0123456789abcdef0123456789abcdef")
+        print("  e-chat-trace.py 0123456789abcdef0123456789abcdef '您好，很高兴为您服务。'")
         sys.exit(1)
 
     conversation_id = sys.argv[1]

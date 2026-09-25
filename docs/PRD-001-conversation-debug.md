@@ -120,7 +120,7 @@
 
 ## 一、项目定位
 
-本文件夹 `D:\我的工作台\bty-cs-cli` 的功能定位：
+本仓库的功能定位：
 
 **为 BetterYeah AI 客服平台的运维工程师和 QA 人员提供基于 cs-cli 的自动化分析工具与文档。**
 
@@ -189,7 +189,7 @@ Step 6: 保存到 ~/cs-ops/memory/e-chat-debug/
 
 | 输入 | 类型 | 必填 | 示例 |
 |------|------|------|------|
-| `conversation_id` | string | ✅ | `65d29cfb142a471e9da55d850d3148ed` |
+| `conversation_id` | string | ✅ | `0123456789abcdef0123456789abcdef` |
 
 ### 3.3 输出规格
 
@@ -200,8 +200,8 @@ Step 6: 保存到 ~/cs-ops/memory/e-chat-debug/
 ```markdown
 ## 会话消息列表（共 15 条）
 
-**会话 ID**: 65d29cfb142a471e9da55d850d3148ed  
-**Agent**: 无印良品客服（a0901fe383064c2abefb0bf1cd52988e）  
+**会话 ID**: 0123456789abcdef0123456789abcdef  
+**Agent**: 示例品牌客服（0123456789abcdef0123456789abcdef）  
 **用户 ID**: jd_12345678
 
 | # | 时间 | role | type | 内容摘要 |
@@ -226,7 +226,7 @@ Step 6: 保存到 ~/cs-ops/memory/e-chat-debug/
 
 **路径**: `~/cs-ops/memory/e-chat-debug/{record_id前8位}-{店铺缩写}-{简短问题描述}.md`
 
-**示例**: `0b73179f-无印良品-图片答非所问导致转人工.md`
+**示例**: `0b73179f-示例店铺-图片答非所问导致转人工.md`
 
 ---
 
@@ -471,8 +471,8 @@ cs-cli debug reproduce <user_record_id> --dry-run
 
 ### 7.2 集成测试
 
-1. 在 `D:\我的工作台\bty-cs-cli\` 目录下启动 Claude Code
-2. 输入 `/cs-conversation-debug 65d29cfb142a471e9da55d850d3148ed`
+1. 在仓库根目录下启动 Claude Code
+2. 输入 `/cs-conversation-debug 0123456789abcdef0123456789abcdef`
 3. 验证消息列表正确展示
 4. 选择一条 assistant 回复
 5. 验证 debug trace 正常拉取
@@ -506,6 +506,6 @@ A3: 两者都是"单条回复根因分析"，共用目录便于后续统一检�
 
 ## 附录 A：参考资源
 
-- cs-cli 官方 README: `/c/Users/13328/AppData/Roaming/npm/node_modules/@bty/customer-service-cli/README.md`
-- cs-chat-debug Skill 定义: `C:\Users\13328\.claude\skills\cs-chat-debug\SKILL.md`
+- cs-cli 官方 README: `%APPDATA%/npm/node_modules/@bty/customer-service-cli/README.md`
+- cs-chat-debug Skill 定义: `（cs-chat-debug skill 定义，外部环境无对应物）`
 - BTY 执行链路图解: `preprocess → judge → combined → condition_1 → business → solution new`

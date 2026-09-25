@@ -210,7 +210,7 @@ function cmdHelp() {
   info(bold('示例'));
   info(`  csdbg doctor`);
   info(`  csdbg rpa --check`);
-  info(`  csdbg cross --conversation-id dbc7a1d8... --channel douyin \\`);
+  info(`  csdbg cross --conversation-id 0123456789abcdef... --channel douyin \\`);
   info(`        --start 2026-09-18T10:00:00 --end 2026-09-18T11:00:00`);
   info('');
   info(`${dim('子命令参数里用 -- 可隔断 csdbg 自身的解析，如: csdbg server -- --check')}`);

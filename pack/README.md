@@ -9,14 +9,18 @@ Cursor 等）加载 skill 后，用它自带的大模型完成最后的交叉论
 
 | 技能 | 定位 | 输入 | 产物 |
 |------|------|------|------|
-| **`cs-log-cross`** | ★ 主入口：服务端 × RPA × 运维 × 主机/IP 四方日志交叉定责 | 锚点 ID/关键词 + 时间窗口 + 问题描述 | `temp/analysis_*.md` 报告 |
+| **`cs-log-cross`** | ★ 主入口：服务端 × RPA × 运维 × 主机/IP 四方日志交叉定责 | 锚点 ID/关键词 + 时间窗口 + 问题描述 | `temp/analysis_*.md` 报告（规范见 `docs/REPORT_STANDARD.md`） |
+| **`cs-fault-playbook`** | ★ 故障类型手册：22 类已积累问题 → 标准查询流程 → 判定 → 结论模板 | 现象描述 / 证据包 | 归类 + 取证流程 |
 | `cs-rpa-log` | 单源：4 渠道 RPA 日志快速查询 | 渠道 + 设备/会话/关键词 | 时间线 / JSON |
 | `cs-conversation-debug` | 单链路：会话内单条回复根因 debug | `conversation_id` | 终端报告 |
 | `e-chat-trace` | 单链路：消息全链路（Agent trace + RPA 日志自动串联） | `conversation_id` | 终端报告 |
 
 配套脚本（`scripts/`）：`cross_analysis.py`（四方对齐→证据包，第④源用 `--host-bundle` 喂入）、`server_log_query.py` /
 `rpa_log_query.py`（SLS 两源）、`ops_log_query.py`（本地 cs-cli 运维记录）、
-`gap_analysis.py`（会话间隔/事故窗口统计）、`collect_rpa_logs.ps1`（事故主机日志采集）。
+`gap_analysis.py`（会话间隔/事故窗口统计）、`collect_rpa_logs.ps1`（事故主机日志采集）、
+`sls_sql_query.py`（SLS SQL LIKE 精确子串，绕开中文分词）、`srv_summarize.py`（服务端日志摘要）、
+`conv_timeline.py` / `conv_list_all.py`（单会话时间线 / 全量会话清单）、`dup_skip_audit.py`（去重拦截审计）、
+`fetch_equipment_shots.py`（设备桌面截图回放取证）。
 
 > **另一种装法（npm CLI）**：如果更想要命令行安装（配置与输出统一落 `~/.csdbg/`，升级不丢数据），
 > 用 npm 包 `cs-debug-toolkit`，**一行搞定**：

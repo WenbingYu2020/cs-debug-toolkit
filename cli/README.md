@@ -121,6 +121,9 @@ CLI 模式下所有可变数据都在 `~/.csdbg/`（不在 `node_modules` 里，
 └── temp/             # 证据包 evidence_*/ 与分析报告 analysis_*.md
 ```
 
+报告落盘规范（结论三段式、报告框架含【影响面 · 风险 · 建议】收尾段、证据区只留 screenshots、结案清理）见随包分发的
+`docs/REPORT_STANDARD.md`；CLI 模式下默认交付目录就是上面的 `~/.csdbg/temp/`。
+
 覆盖默认位置：环境变量 `CSDBG_HOME`（改根目录）、`CSDBG_CONFIG`、`CSDBG_TEMP`。
 `csdbg paths` 永远打印当前生效的路径；`csdbg env` 打印手动跑 Python 脚本时要设的变量。
 
@@ -173,11 +176,12 @@ csdbg init --force --ak-id <AccessKeyId> --ak-secret <AccessKeySecret>
 
 ---
 
-## 四个技能
+## 六个技能
 
 | 技能 | 定位 | 产物 |
 |---|---|---|
-| **`cs-log-cross`** | ★ 主入口：服务端 × RPA × 运维 × 主机/IP 四方交叉定责 | `~/.csdbg/temp/analysis_*.md` |
+| **`cs-log-cross`** | ★ 主入口：服务端 × RPA × 运维 × 主机/IP 四方交叉定责 | `~/.csdbg/temp/analysis_*.md`（规范见 `docs/REPORT_STANDARD.md`） |
+| **`cs-fault-playbook`** | ★ 故障类型手册：22 类已积累问题 → 标准查询流程 → 判定 → 结论模板 | 归类结果 + 取证流程 |
 | `cs-rpa-log` | 单源：4 渠道 RPA 日志快速查询 | 时间线 / JSON |
 | `cs-conversation-debug` | 单链路：会话内单条回复根因 debug | 终端报告 |
 | `e-chat-trace` | 单链路：消息全链路（Agent trace + RPA 自动串联） | 终端报告 |

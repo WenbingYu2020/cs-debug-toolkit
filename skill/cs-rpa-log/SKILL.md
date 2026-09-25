@@ -63,7 +63,7 @@ python scripts/rpa_log_query.py --list-channels
 ```bash
 python scripts/rpa_log_query.py \
   --channel douyin \
-  --equipment-id "7802dae4ed574ad1ab32d5d587ba429d" \
+  --equipment-id "abcdef0123456789abcdef0123456789" \
   --start "2026-08-22T10:30:00" \
   --end "2026-08-22T10:50:00"
 ```
@@ -73,7 +73,7 @@ python scripts/rpa_log_query.py \
 ```bash
 python scripts/rpa_log_query.py \
   --channel douyin \
-  --conversation-id "dbc7a1d886834093b1a895cbb34551e0" \
+  --conversation-id "0123456789abcdef0123456789abcdef" \
   --start "2026-08-22T10:30:00" \
   --end "2026-08-22T10:50:00"
 ```
@@ -93,7 +93,7 @@ python scripts/rpa_log_query.py \
 ```bash
 python scripts/rpa_log_query.py \
   --channel douyin \
-  --conversation-id "dbc7a1d886834093b1a895cbb34551e0" \
+  --conversation-id "0123456789abcdef0123456789abcdef" \
   --start "2026-08-22T10:30:00" \
   --end "2026-08-22T10:50:00" \
   --output "./temp/rpa_logs.json"
@@ -125,7 +125,7 @@ python scripts/rpa_log_query.py \
   渠道: 抖音 (douyin)
   Logstore: project-douyin-rpa-prod
   时间范围: 2026-08-22T10:30:00 ~ 2026-08-22T10:50:00
-  查询语句: "dbc7a1d886834093b1a895cbb34551e0"
+  查询语句: "0123456789abcdef0123456789abcdef"
   限制条数: 1000
 
 ✅ 查询成功，返回 24 条日志
@@ -134,7 +134,7 @@ python scripts/rpa_log_query.py \
 日志时间线
 ================================================================================
 [  1] 10:40:03 (  0.0s) [INFO ] message_logger       _log_message
-      [接收] reply-message user=《风一样的男人》_ conv=dbc7a1d...
+      [接收] reply-message user=《示例用户》_ conv=dbc7a1d...
 
 [  2] 10:40:28 (+  25.0s) [INFO ] working_phase        _logged_handle_message
       [中控下发] type=reply-message, data={"type":"reply-message"...
@@ -154,9 +154,9 @@ python scripts/rpa_log_query.py \
     "level": "INFO",
     "module": "message_logger",
     "function": "_log_message",
-    "message": "[接收] reply-message user=《风一样的男人》_...",
-    "extra_equipment_id": "7802dae4ed574ad1ab32d5d587ba429d",
-    "extra_conversation_id": "dbc7a1d886834093b1a895cbb34551e0",
+    "message": "[接收] reply-message user=《示例用户》_...",
+    "extra_equipment_id": "abcdef0123456789abcdef0123456789",
+    "extra_conversation_id": "0123456789abcdef0123456789abcdef",
     "extra_data": "{...}"
   }
 ]
@@ -183,7 +183,7 @@ python scripts/rpa_log_query.py \
 ```bash
 python scripts/rpa_log_query.py \
   --channel pinduoduo \
-  --equipment-id "92d9395355694fba821e36b8cc75f6fc" \
+  --equipment-id "abcdef0123456789abcdef0123456789" \
   --start "2026-08-21T12:28:00" \
   --end "2026-08-21T12:40:00"
 ```

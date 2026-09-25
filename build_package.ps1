@@ -56,9 +56,12 @@ Copy-Item -Recurse (Join-Path $src 'templates') $stage
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'temp') | Out-Null
 New-Item -ItemType File -Force -Path (Join-Path $stage 'temp\.gitkeep') | Out-Null
 
-# 4b. docs/（排障文档，随包分发便于新手自助）
+# 4b. docs/（排障文档 + 排查报告规范与 HTML 模板，随包分发便于新手自助）
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'docs') | Out-Null
-Copy-Item (Join-Path $src 'docs\troubleshooting.md') (Join-Path $stage 'docs')
+Copy-Item (Join-Path $src 'docs\troubleshooting.md')   (Join-Path $stage 'docs')
+Copy-Item (Join-Path $src 'docs\REPORT_STANDARD.md')  (Join-Path $stage 'docs')
+Copy-Item (Join-Path $src 'docs\RISK_REVIEW.md')      (Join-Path $stage 'docs')
+Copy-Item -Recurse (Join-Path $src 'docs\templates')  (Join-Path $stage 'docs')
 
 # 5. 质量门：语法编译 + 配置模板可解析 + 无个人路径/密钥泄漏
 $py = $null
@@ -102,6 +105,15 @@ $leak = Get-ChildItem -Recurse -File $stage | Where-Object {
 } | Select-String -Pattern $patterns -List
 if ($leak) { $leak | ForEach-Object { Write-Host "⚠ 泄漏嫌疑: $($_.Path):$($_.LineNumber)" -ForegroundColor Red } }
 if ($leak) { throw "包内发现个人路径/AK 痕迹，终止打包" }
+
+# 质量门 C2：源码树公开内容扫描
+#   上面只扫了「分发包」；docs/ tests/ skill/ *.md 等不入包但会进公开仓库 → 另扫整棵树
+$leakScan = Join-Path $src 'scripts\leak_scan.py'
+if ($py -and (Test-Path $leakScan)) {
+  $scanOut = & $py $leakScan --quiet 2>&1
+  if ($LASTEXITCODE -ne 0) { $scanOut | ForEach-Object { Write-Host $_ }; throw "源码树扫描发现疑似泄漏（先跑 python scripts\leak_scan.py 看明细），终止打包" }
+  Write-Host "源码树泄漏扫描: 干净" -ForegroundColor Green
+}
 
 # 6. 清理质量门/源目录带入的 __pycache__
 Get-ChildItem -Recurse -Directory -Filter '__pycache__' $stage | Remove-Item -Recurse -Force

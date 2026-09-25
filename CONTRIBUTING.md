@@ -13,7 +13,7 @@
 
 ```bash
 # Clone and enter repository
-cd /d/WorkSpace/cs-cli
+cd <克隆目录>/cs-cli
 
 # Install Python dependencies
 pip install -r requirements.txt

@@ -35,3 +35,6 @@ Thumbs.db
 
 # 本地开发配置（Claude Code），含案例数据，不分发
 .claude/
+
+# 本机网络绕行脚本（含 hosts 改动，不入库）
+fix_github_hosts.ps1

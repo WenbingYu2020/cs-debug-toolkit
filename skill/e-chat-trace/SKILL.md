@@ -27,7 +27,7 @@ allowed-tools: Bash, Read
 
 ```
 输入:
-  conversation_id 字符串             例如: eb27d27901214b36a75223a2bc5f62a1
+  conversation_id 字符串             例如: 0123456789abcdef0123456789abcdef
   可选: 目标消息内容或问题描述        例如: "您好，很高兴为您服务。" 或 "消息延迟"
 
 输出:

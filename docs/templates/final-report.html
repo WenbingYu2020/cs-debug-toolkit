@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{MMDD 渠道·店铺（客服账号）问题简称}}</title>
+<!--
+  单文件自包含 HTML 报告骨架（标准格式 v1，2026-09-25 定标）
+  用法：整份复制 → 替换 {{...}} 占位 → 与同名 _FINAL_REPORT.md 同目录交付。
+  规范见 docs/REPORT_STANDARD.md §3（MD 五段）/ §4（HTML 结构）。
+  硬要求：内联 CSS、无外链、无 JS；ID 一律完整 32 位；证据原文逐字复制进 .e / <td>。
+-->
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#1f2329; --muted:#6b7280;
+    --server:#2563eb; --device:#ea7b1a; --fail:#dc2626;
+    --ok:#15803d; --warn:#a16207; --info:#1d4ed8; --line:#e5e7eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,"Courier New",monospace;font-size:12.5px}
+  .paths{background:#eceef1;border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:#374151;line-height:2}
+  h1{font-size:21px;margin:22px 0 6px}
+  h2{font-size:17px;margin:32px 0 12px;padding-left:10px;border-left:4px solid var(--server)}
+  h3{font-size:14.5px;margin:18px 0 8px;color:#374151}
+  h4{font-size:13.5px;margin:0 0 6px}
+  .card{background:var(--card);border-radius:16px;padding:18px 20px;border:1px solid var(--line)}
+  .concl{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch}
+  .concl .meta{flex:1 1 430px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-content:start}
+  .concl .meta b{color:var(--muted);font-weight:500}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+  .badge.fail{background:#fee2e2;color:var(--fail)}
+  .badge.device{background:#ffedd5;color:var(--device)}
+  .badge.ok{background:#dcfce7;color:var(--ok)}
+  .badge.warn{background:#fef9c3;color:var(--warn)}
+  .redbar{margin-top:14px;background:#fef2f2;border:1px solid #fecaca;border-left:5px solid var(--fail);
+          border-radius:12px;padding:12px 16px;color:#7f1d1d;font-weight:600}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:16px 0 6px;color:var(--muted);font-size:12.5px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .dot.server{background:var(--server)} .dot.device{background:var(--device)} .dot.fail{background:var(--fail)}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}
+  th,td{border-bottom:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top;font-size:13px}
+  th{background:#f8fafc;color:#475569;font-weight:600;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .timeline{position:relative;margin:22px 0 8px;padding:6px 0}
+  .timeline::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--line)}
+  .node{position:relative;width:50%;padding:0 26px;margin:14px 0}
+  .node .inner{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .node .ring{position:absolute;top:16px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--server);z-index:1}
+  .node.left{left:0;text-align:right} .node.left .ring{right:-8px}
+  .node.right{left:50%} .node.right .ring{left:-7px}
+  .node.left .inner{border-right:4px solid var(--server)}
+  .node.right .inner{border-left:4px solid var(--server)}
+  .node.dev .ring{border-color:var(--device)} .node.dev.left .inner{border-right-color:var(--device)}
+  .node.dev.right .inner{border-left-color:var(--device)}
+  .node.bad .ring{border-color:var(--fail);background:#fee2e2}
+  .node.bad.left .inner{border-right-color:var(--fail);background:#fff5f5}
+  .node.bad.right .inner{border-left-color:var(--fail);background:#fff5f5}
+  .node .t{font-weight:700;font-size:12.5px;color:#334155}
+  .node .s{margin:4px 0 6px}
+  .node .e{color:var(--muted);background:#f8fafc;border-radius:8px;padding:6px 8px;display:block;white-space:pre-wrap;word-break:break-word}
+  .seg{display:grid;gap:14px}
+  .seg .box{border-radius:14px;padding:14px 16px;border:1px solid var(--line);background:var(--card)}
+  .seg .box.ok{border-left:5px solid var(--ok)}
+  .seg .box.warn{border-left:5px solid var(--warn)}
+  .seg .box.info{border-left:5px solid var(--info)}
+  .seg ul{margin:6px 0 0 18px;padding:0} .seg li{margin:5px 0}
+  .ck{list-style:none;margin-left:0} .ck li::before{content:"☐ ";color:var(--info);font-weight:700}
+  .pill{font-size:11.5px;padding:1px 7px;border-radius:6px;background:#eef2ff;color:#3730a3;margin-right:6px}
+  footer{margin-top:36px;color:var(--muted);font-size:12.5px}
+  @media (max-width:820px){
+    .timeline::before{left:8px}
+    .node{width:100%;left:0;text-align:left;padding:0 0 0 26px}
+    .node .ring{left:1px !important;right:auto !important}
+    .node .inner{border-left:4px solid var(--server) !important;border-right:1px solid var(--line) !important}
+    .node.dev .inner{border-left-color:var(--device) !important}
+    .node.bad .inner{border-left-color:var(--fail) !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ① 证据落盘路径行：交付目录树 + 证据区截图清单；原始 dump 不留存，写明"复现命令内嵌" -->
+  <div class="paths mono">
+    {{交付区根}}\{{客服账号名}}\<br>
+    ├─ {{YYYYMMDD}}-{{渠道}}-{{账号简称}}-{{问题简称}}_FINAL_REPORT.md<br>
+    ├─ {{YYYYMMDD}}-{{渠道}}-{{账号简称}}-{{问题简称}}_report.html（本文件）<br>
+    └─ 证据区\ ├─ screenshots\{{截图1.png}} ｜ {{截图2.png}}
+    <span style="color:#6b7280">原始 json/日志从不落盘；一次性脚本已按 §5.2 收口规范删除 —— 复现命令内嵌报告与页脚。</span>
+  </div>
+
+  <!-- ② 标题 + 元信息行：渠道 · 店铺 / 客服账号 —— 一句话问题（状态） -->
+  <h1>{{渠道}} · {{店铺}} / {{客服账号}} —— {{一句话问题}}{{（进行中/已恢复）}}</h1>
+  <div style="color:var(--muted);font-size:12.5px;margin-bottom:14px">
+    时间基准：北京时间 ｜ 排查：{{工具/人}} ｜ {{排查时间窗}} ｜ <b style="color:#dc2626">{{状态：排查结束时故障仍在持续}}</b>
+  </div>
+
+  <!-- ③ 结论卡：meta 网格 + 右侧徽标 + 红色结论条（一行内说清机制） -->
+  <div class="card concl">
+    <div class="meta">
+      <b>设备 ID</b><span class="mono">{{equipment_id 完整 32 位}}</span>
+      <b>主机名 / 桌面</b><span class="mono">{{hostname}} / {{desktop_id}}</span>
+      <b>渠道 / 店铺</b><span class="mono">{{channel}} / {{shop}}</span>
+      <b>客服账号</b><span class="mono">{{client_username}}</span>
+      <b>workspace / agent</b><span class="mono">{{workspace_id}} / {{config_id}}</span>
+      <b>版本</b><span class="mono">{{客户端/RPA 版本}}</span>
+      <b>故障窗口</b><span class="mono">{{HH:MM:SS → HH:MM:SS（时长/持续中）}}</span>
+    </div>
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:8px;justify-content:flex-start">
+      <span class="badge fail">失败点：{{一句话失败点}}</span>
+      <span class="badge device">RPA {{行为特征}}</span>
+      <span class="badge ok">{{反直觉的健康项，如：心跳/CPU 全绿}}</span>
+    </div>
+  </div>
+  <div class="redbar">
+    结论：{{已证范围内的一句话结论，含关键日志原文片段}}，{{影响量化}}；{{次要事实}} —— {{三要素归纳}}。
+  </div>
+
+  <!-- ④ 图例 -->
+  <div class="legend">
+    <span><i class="dot server"></i>服务端 / BY（指令·状态）</span>
+    <span><i class="dot device"></i>设备端 RPA（动作·日志）</span>
+    <span><i class="dot fail"></i>失败点</span>
+  </div>
+
+  <!-- ⑤ 中心竖轴时间线：server=左、device=右；失败点加 class="bad"；每卡 .t 时间+摘要 / .s 说明 / .e 证据原文 -->
+  <h2>证据时间线</h2>
+  <div class="timeline">
+    <div class="node left"><div class="ring"></div><div class="inner">
+      <div class="t">{{HH:MM–HH:MM}} · {{节点摘要}}</div>
+      <div class="s">{{该节点发生了什么（含关键 ID）}}</div>
+      <span class="e mono">{{证据原文（逐字复制，可多行）}}</span>
+    </div></div>
+    <div class="node right dev"><div class="ring"></div><div class="inner">
+      <div class="t">{{HH:MM:SS}} · {{设备端节点}}</div>
+      <div class="s">{{说明}}</div>
+      <span class="e mono">{{设备端日志原文}}</span>
+    </div></div>
+    <div class="node bad right dev"><div class="ring"></div><div class="inner">
+      <div class="t" style="color:var(--fail)">✕ {{HH:MM:SS}} · {{断点/失败点}}</div>
+      <div class="s">{{为什么是失败点}}</div>
+      <span class="e mono">{{失败日志原文}}</span>
+    </div></div>
+  </div>
+
+  <!-- ⑥ 证据时间线表格：时间｜服务端/BY｜设备端 RPA，每行前置来源色点，"无"写 — -->
+  <h2>证据时间线表格</h2>
+  <table>
+    <thead><tr><th style="width:150px">时间</th><th>服务端 / BY（指令·状态）</th><th>设备端 RPA（动作·日志）</th></tr></thead>
+    <tbody>
+      <tr><td class="mono"><i class="dot server"></i>{{HH:MM:SS}}</td><td>{{服务端状态}}</td><td class="mono">{{设备端日志}}</td></tr>
+      <tr><td class="mono"><i class="dot device"></i>{{HH:MM:SS}}</td><td>—</td><td class="mono">{{设备端日志}}</td></tr>
+      <tr><td class="mono"><i class="dot fail"></i>{{HH:MM:SS}}</td><td>—</td><td class="mono"><b>{{失败签名}}</b></td></tr>
+      <tr><td class="mono"><i class="dot fail"></i>{{末次}}</td><td>{{运维侧/监控态}}</td><td class="mono">{{持续证据}} → <b>{{结论：是否解除}}</b></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ⑦ 结论三段区：已证(ok) / 未证候选(warn) / 判别性检查清单(info, .ck 方框) -->
+  <h2>结论三段区</h2>
+  <div class="seg">
+    <div class="box ok">
+      <h4>已证部分（要点）</h4>
+      <ul>
+        <li><span class="pill">E1</span>{{事实 + 证据（时间戳 + 原文片段）}}</li>
+        <li><span class="pill">E2</span>{{…}}</li>
+      </ul>
+    </div>
+    <div class="box warn">
+      <h4>未证候选</h4>
+      <ul>
+        <li><b>B1 {{候选机制}}</b>：{{解释力}}；{{张力}}。</li>
+        <li><b>B2 {{候选机制}}</b>：{{…}}。</li>
+      </ul>
+    </div>
+    <div class="box info">
+      <h4>判别性检查清单</h4>
+      <ul class="ck">
+        <li>{{看什么 + 在哪看 + 成立则支持哪个候选（可执行、可复现）}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ⑧ 六源定责：服务端 / agent / RPA / host·IP / 渠道平台 / 运维服务；R0 主责 · R1 次责 · R2 待定 · R3 无责 -->
+  <h2>溯源数据源定责（六源）</h2>
+  <table>
+    <thead><tr><th>数据源</th><th>定责</th><th>责任等级</th><th>一句话依据</th></tr></thead>
+    <tbody>
+      <tr><td>服务端</td><td><span class="badge ok">{{排除/有责}}</span></td><td><span class="badge ok">{{R3 无责}}</span></td><td>{{依据}}</td></tr>
+      <tr><td>agent（智能体层）</td><td><span class="badge ok">{{…}}</span></td><td><span class="badge ok">{{…}}</span></td><td>{{依据}}</td></tr>
+      <tr><td>RPA（客户端）</td><td><span class="badge fail">{{有责}}</span></td><td><span class="badge fail">{{R0 主责}}</span></td><td>{{依据}}</td></tr>
+      <tr><td>host/IP</td><td><span class="badge ok">{{排除}}</span></td><td><span class="badge ok">{{R3 无责}}</span></td><td>{{依据}}</td></tr>
+      <tr><td>渠道平台（{{平台}}）</td><td><span class="badge warn">{{数据缺口}}</span></td><td><span class="badge warn">{{R2 待定}}</span></td><td>{{依据}}</td></tr>
+      <tr><td>运维服务</td><td><span class="badge fail">{{有责（发现环节）}}</span></td><td><span class="badge warn">{{R1 次责}}</span></td><td>{{依据}}</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ⑨ 影响面·风险·建议 -->
+  <h2>影响面 · 风险 · 建议</h2>
+  <table>
+    <thead><tr><th style="width:150px">项</th><th>内容</th><th style="width:80px">优先级</th></tr></thead>
+    <tbody>
+      <tr><td>客户影响</td><td>{{量化：多少会话/客户，谁还在等}}</td><td><span class="badge fail">P0</span></td></tr>
+      <tr><td>数据影响</td><td>{{台账/统计/训练缺哪段}}</td><td>P1</td></tr>
+      <tr><td>指标影响</td><td>{{平台口径 vs 服务端口径差异}}</td><td>—</td></tr>
+      <tr><td>建议</td><td>① …；② …；③ …（按"改日志 → 改配置 → 改代码"排序，注明责任方与代价）</td><td>P0→P2</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ⑩ 页脚：数据来源与复现命令 + 已排除/未采信 -->
+  <footer>
+    <div class="card">
+      <h3>数据来源与复现命令</h3>
+      <ul style="margin-left:18px">
+        <li>设备侧：SLS <span class="mono">{{project / logstore}}</span>，SQL <span class="mono">{{search + sql-where}}</span>（{{时间窗}}）</li>
+        <li>会话台账：<span class="mono">cs-cli --workspace {{ws}} conversation list --agent {{config_id}} …</span></li>
+        <li>服务端日志：SLS <span class="mono">bty-prod-ack-log / customer-servhub-api</span>（按锚点 LIKE 检索，{{命中数}}）</li>
+        <li>设备帧：<span class="mono">fetch_equipment_shots.py --equipment-id {{eq}} --workspace {{ws}}</span></li>
+        <li>运维面：<span class="mono">cs-cli monitor tickets list</span>（{{条数}} 条）；<span class="mono">cs-cli ops-record list</span></li>
+      </ul>
+      <h3>已排除 / 未采信</h3>
+      <ul style="margin-left:18px">
+        <li>已排除：{{逐项写排除依据（心跳/CPU/网络/额度/版本/店铺级…）}}</li>
+        <li>未采信：{{哪条数据不能代表本案影响及原因}}</li>
+      </ul>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

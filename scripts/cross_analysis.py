@@ -26,8 +26,8 @@ cross_analysis.py — 多方日志交叉分析证据包生成器（功能区核�
       --start 2026-09-18T00:00:00 --end 2026-09-18T23:59:59
 
   # 带主机侧证据（第④源）: 事故主机上跑完 collect_rpa_logs.ps1 后回传的 zip
-  python3 cross_analysis.py --conversation-id dbc7a1d8... \
-      --host-bundle "D:/WorkSpace/cs-cli/temp/RpaLogCollect_20260918_1200.zip" \
+  python3 cross_analysis.py --conversation-id 0123456789abcdef... \
+      --host-bundle "<TOOLKIT>/temp/RpaLogCollect_<时间戳>.zip" \
       --start 2026-09-18T10:30:00 --end 2026-09-18T11:45:00
 
 输出:

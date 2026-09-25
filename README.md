@@ -39,7 +39,8 @@ cross_analysis.py  对齐四方 → temp/evidence_<时间>_<锚点>/
 > **数据源插件化**：四源（服务端/RPA/ops/主机）实现在 `scripts/sources.py` 的 `DataSource` 插件里，
 > 由 `build_sources()` 注册表装配——新增数据源只需实现子类 + 注册一行，不改主流程。
 >
-> **故障签名匹配**：`templates/fault_signatures.json` 沉淀了 16 条故障签名（第十五/六/七型等），
+> **故障签名匹配**：`templates/fault_signatures.json` 沉淀了 26 条故障签名（其中 17 条参与自动匹配），
+> 覆盖面板白屏、状态残留、重复转接、选店失败、主机冻结、平台口径等 22 类已积累问题；
 > 证据包生成时自动匹配候选并在 `evidence.md` 给出「命中特征 + 结论模板」；
 > `csdbg signatures --list` 查看知识库、`--match-dir <证据包>` 对历史证据复检，本地可增补到 `~/.csdbg/`。
 
@@ -52,7 +53,7 @@ cross_analysis.py  对齐四方 → temp/evidence_<时间>_<锚点>/
 | **npm CLI**（推荐） | `powershell -File .\build_cli.ps1` | `dist\cs-debug-toolkit-<ver>.tgz` | `npm i -g <tgz>` → `csdbg init` → `csdbg doctor` |
 | **zip 解包** | `powershell -File .\build_package.ps1` | `dist\cs-debug-toolkit.zip` | 解压 → `setup.ps1` |
 
-两者都带 `skill/` 下 5 个技能（`cs-log-cross` / `cs-router` / `cs-rpa-log` / `cs-conversation-debug` / `e-chat-trace`），
+两者都带 `skill/` 下 6 个技能（`cs-log-cross` / `cs-router` / **`cs-fault-playbook`** / `cs-rpa-log` / `cs-conversation-debug` / `e-chat-trace`），
 装进 agent 技能目录后由各自的大模型完成最后的交叉论证——脚本层与大模型无关。
 
 - CLI 形态源码在 [`cli/`](cli/)（`bin/csdbg.js` 零第三方依赖）；配置与输出落 `~/.csdbg/`
@@ -75,12 +76,21 @@ cs-cli/
 │   ├── sources.py               # ★ 数据源插件层（DataSource 接口 + 注册表 build_sources）
 │   ├── fault_signatures.py      # ★ 故障签名知识库（加载/匹配/--match-dir 复检）
 │   ├── gap_analysis.py          #   平响排查：user→assistant 间隔 / duration / failed 签名统计
+│   ├── csapi.py                 #   cs-cli 调用助手（raw_decode 解析 + data 解包，供下列脚本复用）
+│   ├── conv_timeline.py         #   单会话逐条消息时间线（间隔 / duration / send_results / error_detail）
+│   ├── conv_list_all.py         #   某 agent 指定日期全量会话清单（自动翻页）
+│   ├── dup_skip_audit.py        #   "服务端检测重复消息，跳过推送"审计：判定去重是否造成漏答/状态挂起
+│   ├── srv_summarize.py         #   服务端日志摘要（message 模式聚类 + 时间窗/关键词过滤）
+│   ├── fetch_equipment_shots.py #   设备桌面截图帧：handle_upload 帧清单 → sign-url 签名下载 PNG
+│   ├── sls_sql_query.py         #   通用 SLS SQL（LIKE 过滤，绕开中文分词坑）
+│   ├── leak_scan.py             #   发版前公开内容扫描（扫 git 跟踪的整棵树，非仅分发包）
 │   ├── telemetry.py             #   可选本地埋点（CSDBG_TELEMETRY=1 启用，仅写本地）
 │   ├── selftest.py              #   离线自检（无网络/无 AK 验证工具链）
-│   └── legacy/                  #   旧版分析脚本（硬编码本机路径，仅历史参考，勿用于新排查）
+│   └── legacy/                  #   旧版分析脚本（路径为示例值，仅历史参考，勿用于新排查）
 ├── skill/                       # ★ 单源 skill 定义（分发用，build_*.ps1 从这里取）
 │   ├── cs-log-cross/            #   四方交叉分析（主入口）
 │   ├── cs-router/               #   排查入口路由（meta-skill）
+│   ├── cs-fault-playbook/       #   ★ 故障类型手册：22 类症状 → 标准查询流程 → 判定 → 结论模板
 │   ├── cs-rpa-log/              #   单源 RPA 日志
 │   ├── cs-conversation-debug/   #   单链路会话根因
 │   └── e-chat-trace/            #   消息全链路
@@ -97,7 +107,7 @@ cs-cli/
 ├── templates/                   # HTML 报告模板 + fault_signatures.json（故障签名知识库）
 ├── temp/                        # ★ 功能区输出目录：证据包 + 分析结论（gitignore）
 ├── tests/                       # pytest 回归测试（离线，不依赖网络/AK）
-└── docs/                        # PRD / 设计文档 / troubleshooting.md（常见错误排障）
+└── docs/                        # PRD / 设计文档 / troubleshooting.md / REPORT_STANDARD.md + templates/
 ```
 
 ## 快速开始
@@ -132,10 +142,11 @@ python3 scripts/cross_analysis.py --conversation-id <id> \
 
 | Skill | 定位 | 输入 | 结论输出 |
 |-------|------|------|---------|
-| **`/cs-log-cross`** | ★ 四方日志交叉分析定责 | 锚点 ID/关键词 + 时间窗口 + 问题描述 | `temp/analysis_*.md` |
+| **`/cs-log-cross`** | ★ 四方日志交叉分析定责 | 锚点 ID/关键词 + 时间窗口 + 问题描述 | `analysis_*.md`（本机落 `D:\temp\<客服账号名>\`，外部分发落 `<输出目录>`） |
 | `/cs-router` | 排查入口路由（meta-skill：按问题类型选工具） | 问题描述 | 路由建议 |
+| **`/cs-fault-playbook`** | ★ 故障类型手册与标准查询流程（22 类已积累问题） | 现象描述 / 证据包 | 归类 + 标准取证流程 + 判定判据 |
 | `/cs-rpa-log` | 单源：RPA 日志查询 | 渠道 + 设备/会话/关键词 | 终端/JSON |
-| `/cs-conversation-debug` | 单链路：会话消息根因 debug | `conversation_id` | 终端 |
+| `/cs-conversation-debug` | 单链路：会话消息根因 debug | `conversation_id` | 终端（留档时落报告交付目录） |
 | `/e-chat-trace` | 消息全链路排查（Agent trace + RPA 收发自动串联） | `conversation_id` | 终端（不落盘） |
 
 > `/e-chat-trace` 是 `skill/` 下的独立技能（非 slash command，`.claude/commands/` 未内置入口）：
@@ -166,10 +177,14 @@ python3 scripts/cross_analysis.py --conversation-id <id> \
 | 产物 | 路径 | 说明 |
 |------|------|------|
 | 证据包 | `temp/evidence_<YYYYmmdd_HHMMSS>_<slug>/` | 各源原始日志 + 对齐结果，供复核 |
-| **分析结论** | `temp/analysis_<YYYYMMDD-HHMM>-<slug>.md` | **功能区最终交付物**：结论先行、时间轴对齐、交叉论证、根因判定、建议 |
+| **分析结论** | 交付目录 `analysis_<YYYYMMDD-HHMM>-<slug>.md` | **功能区最终交付物**：结论先行、时间轴对齐、交叉论证、根因判定、建议 |
 
-`temp/` 全部内容不入库（`.gitignore`），是工作产物区；其中已沉淀多轮历史排查目录
-（`evidence_*` 证据包、各店铺/日期命名的案例目录），可作案例复盘与错误模式沉淀参考。
+结论与报告的落盘位置（含证据区收口、结案清理）见 [docs/REPORT_STANDARD.md](docs/REPORT_STANDARD.md) §5：
+**本机 cs-cli 环境**写 `D:\temp\<客服账号名>\`（报告 + `证据区\screenshots`，证据区**只有 screenshots**），
+**外部分发包环境**写 `<输出目录>`（`~/.csdbg/temp` 或 `<TOOLKIT>/temp`）。
+
+`temp/` 是排查过程中的临时中转区（`.gitignore` 不入库），**结案必须清零**（只留 `README.md`）：
+报告与截图归交付目录的 `证据区\screenshots\`，其余（原始 json/日志/一次性脚本）一律不留存——复现靠报告内嵌命令。
 
 ## 与全局 cs-* skills 的关系
 
@@ -179,7 +194,10 @@ python3 scripts/cross_analysis.py --conversation-id <id> \
 ## 参考资源
 
 - PRD：[docs/PRD-002-cross-log-analysis.md](docs/PRD-002-cross-log-analysis.md)（本功能区需求）
+- 规范：[docs/REPORT_STANDARD.md](docs/REPORT_STANDARD.md)（结论三段式 / 报告五段固定格式 v1 + 六源定责 / 落盘与结案清理，强制）
+- 风险：[docs/RISK_REVIEW.md](docs/RISK_REVIEW.md)（工具链风险与漏洞评估 + 修复方案）
 - 排障：[docs/troubleshooting.md](docs/troubleshooting.md)（常见错误 → 处置索引）
+- 模板：[docs/templates/final-report.html](docs/templates/final-report.html)（单文件自包含 HTML 报告骨架）
 - 变更：[CHANGELOG.md](CHANGELOG.md) · 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
 - 控制台入口：[服务端日志](https://sls.console.aliyun.com/lognext/project/bty-prod-ack-log/logsearch/customer-servhub-api?slsRegion=cn-hangzhou) · [RPA 日志](https://sls.console.aliyun.com/lognext/project/customer-servhub-log/overview?slsRegion=cn-hangzhou)
 - cs-cli 官方 README：`%APPDATA%/npm/node_modules/@bty/customer-service-cli/README.md`

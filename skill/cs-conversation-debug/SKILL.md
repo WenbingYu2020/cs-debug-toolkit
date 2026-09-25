@@ -69,7 +69,7 @@ cs-cli conversation records <conversation_id> > <TOOLKIT>/temp/conv-debug-record
   "role": "assistant",          // user | assistant
   "category": "agent_response", // "agent_response" = Agent 实际回复（有 trace）
                                 // "report" = 导入的历史聊天记录（无 trace）
-  "record_id": "68f0639d...",   // 用于 debug record 的 ID（注意：不是 match_id）
+  "record_id": "0123456789ab...",   // 用于 debug record 的 ID（注意：不是 match_id）
   "context_type": "TEXT",       // TEXT | IMAGE | CARD
   "context": {
     "url": null,
@@ -79,7 +79,7 @@ cs-cli conversation records <conversation_id> > <TOOLKIT>/temp/conv-debug-record
   "message_time": "2026-08-13T12:25:35",  // ISO 格式（北京时间，非 Unix 时间戳）
   "transfer_to_human": false,
   "trace_info": {...} | null,   // 有 trace_info 的才能做 debug 分析
-  "role_name": "苏泊尔官方旗舰店:轶腊"  // 发送者名称
+  "role_name": "示例旗舰店:客服A"  // 发送者名称
 }
 ```
 
@@ -126,8 +126,8 @@ agent_name = next((r['role_name'] for r in records if r['role'] == 'assistant'),
 
 | 序号 | 时间     | 角色      | 类型  | 类别           | Trace | 消息摘要                  |
 |------|----------|-----------|-------|----------------|-------|---------------------------|
-| 1    | 12:24:57 | assistant | TEXT  | agent_response | ✅    | 欢迎光临苏泊尔官方旗舰店... |
-| 2    | 12:25:01 | user      | TEXT  | -              | -     | 那纯钛的优势就是低糖吗...   |
+| 1    | 12:24:57 | assistant | TEXT  | agent_response | ✅    | 欢迎光临示例旗舰店... |
+| 2    | 12:25:01 | user      | TEXT  | -              | -     | 那该材质的优势就是低糖吗...   |
 | 3    | 12:25:11 | assistant | TEXT  | report         | ❌    | （导入的历史聊天记录）     |
 
 **可分析消息**: {has_trace_count} 条（带 ✅ 的 agent_response）
@@ -197,8 +197,11 @@ cs-cli debug record "<assistant_record_id>" > <TOOLKIT>/temp/conv-debug-trace.js
 
 ### Step 5 — 输出结构化报告
 
-按 `references/report-templates.md` 的模板直接在终端输出（不落盘；如需存档写入
-`<TOOLKIT>/temp/`，文件名 `conv-debug_<会话前8位>_<HHMM>.md`）。
+按 `references/report-templates.md` 的模板直接在终端输出，文件名
+`conv-debug_<会话前8位>_<HHMM>.md`。
+默认不落盘；**用户要求留档/结案时**写入报告交付目录——本机 cs-cli 项目环境写
+`D:\temp\<客服账号名>\`（先校验目录，不存在才创建；见 `docs/REPORT_STANDARD.md` §5.1），
+外部分发包环境写 `<TOOLKIT>/temp/`。
 支持重复分析：每次可选不同消息，各自输出新报告。
 
 ---

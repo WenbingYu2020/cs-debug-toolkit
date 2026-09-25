@@ -1,6 +1,6 @@
 {
   "name": "cs-debug-toolkit",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "客服多方日志排查工具包：服务端 SLS × RPA SLS × 运维记录 × 主机/IP 侧四方交叉分析，附 5 个 agent skill（SKILL.md 跨智能体通用格式）",
   "keywords": [
     "betteryeah",
